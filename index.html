@@ -299,11 +299,11 @@ var positions=Object.assign({},defaultLayout,saved.positions||{}),styles=saved.s
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function save(){try{localStorage.setItem('fryefbu-report-layout',JSON.stringify({positions:positions,styles:styles}))}catch(e){}}
 function applyPos(el,key){var p=positions[key]||defaultLayout[key];if(!p)return;el.style.left=p.x+'%';el.style.top=p.y+'px';el.style.width=p.w+'%';el.style.height=p.h+'px'}
-function applyStyle(el,key){var s=styles[key]||{};if(s.color)el.style.color=s.color;if(s.font)el.style.fontSize=s.font+'px';if(s.width)el.style.width=s.width+(s.free?'px':'%');if(s.height)el.style.height=s.height+'px';if(s.x!=null&&s.y!=null){el.classList.add('report-free-item');el.style.left=s.x+'px';el.style.top=s.y+'px';el.style.position='absolute'}}
+function applyStyle(el,key){var s=styles[key]||{};if(s.color){el.style.color=s.color;if(key==='chart'){var bg=el.querySelector('svg rect[data-edit-kind=background]');if(bg)bg.setAttribute('fill',s.color)}}if(s.font){el.style.fontSize=s.font+'px';if(key==='chart')el.querySelectorAll('svg text').forEach(function(t){t.style.fontSize=s.font+'px'})}if(s.width)el.style.width=s.width+(s.free?'px':'%');if(s.height)el.style.height=s.height+'px';if(s.x!=null&&s.y!=null){el.classList.add('report-free-item');el.style.left=s.x+'px';el.style.top=s.y+'px';el.style.position='absolute'}}
 function register(){
 tableNode.querySelectorAll('[data-report-id]').forEach(function(el){var key=el.getAttribute('data-report-id');el.classList.add('report-item');applyPos(el,key);applyStyle(el,key)});
 var graph=frame;graph.setAttribute('data-report-id','chart');graph.classList.add('report-item');host.appendChild(graph);applyPos(graph,'chart');applyStyle(graph,'chart');
-tableNode.querySelectorAll('.cap-report-table td').forEach(function(td){var row=td.parentElement,table=td.closest('table'),key=table.id+'-'+row.cells[0].textContent.trim()+'-'+td.cellIndex;td.setAttribute('data-report-text-id',key);applyStyle(td,key)});
+tableNode.querySelectorAll('.cap-report-table h3').forEach(function(el){var key='heading-'+el.parentElement.getAttribute('data-report-id');el.setAttribute('data-report-text-id',key);applyStyle(el,key)});tableNode.querySelectorAll('.cap-report-table td').forEach(function(td){var row=td.parentElement,table=td.closest('table'),key=table.id+'-'+row.cells[0].textContent.trim()+'-'+row.rowIndex+'-'+td.cellIndex;td.setAttribute('data-report-text-id',key);applyStyle(td,key)});
 }
 function readTable(id){var o={};Array.from(document.getElementById(id).rows).forEach(function(r){if(r.cells.length>1)o[r.cells[0].textContent.trim()]=r.cells[1].textContent.trim()});return o}
 function rowsHTML(rows,prefix){return rows.map(function(r){return '<tr'+(r[2]?' class="'+r[2]+'"':'')+'><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>'}).join('')}
@@ -332,7 +332,7 @@ if(title)new MutationObserver(update).observe(title,{childList:true,subtree:true
 reportTitle.addEventListener('input',function(){if(title)title.textContent=this.textContent.replace(/^Capability Analysis for /,'Process Capability of ')});
 function getKey(el){return el.getAttribute('data-report-text-id')||el.getAttribute('data-report-id')}
 function targets(){return Array.from(tableNode.querySelectorAll('[data-report-id],[data-report-text-id]'))}
-function setSelected(arr){selected=Array.from(new Set(arr));targets().forEach(function(el){el.classList.toggle('report-selected',selected.indexOf(el)>=0)});var lab=document.getElementById('reportSelection'),names=selected.map(function(el){return getKey(el)});lab.textContent=names.length?names.join(', '):'Chưa chọn vùng';
+function setSelected(arr){var unique=Array.from(new Set(arr));selected=unique.filter(function(el){return !unique.some(function(other){return other!==el&&other.contains(el)})});targets().forEach(function(el){el.classList.toggle('report-selected',selected.indexOf(el)>=0)});var lab=document.getElementById('reportSelection'),names=selected.map(function(el){return getKey(el)});lab.textContent=names.length?names.join(', '):'Chưa chọn vùng';
 ['reportColor','reportFontSize','reportWidth','reportHeight','reportReset'].forEach(function(id){document.getElementById(id).disabled=!editing||!selected.length});
 if(selected.length===1){var el=selected[0],s=styles[getKey(el)]||{},rect=el.getBoundingClientRect(),box=canvas.getBoundingClientRect();document.getElementById('reportColor').value=s.color||'#202b31';document.getElementById('reportFontSize').value=s.font||parseFloat(getComputedStyle(el).fontSize)||12;document.getElementById('reportFontOut').textContent=document.getElementById('reportFontSize').value+' px';document.getElementById('reportWidth').value=Math.round(rect.width/box.width*100);document.getElementById('reportHeight').value=Math.round(rect.height)}
 }
@@ -350,7 +350,7 @@ document.addEventListener('pointermove',move);document.addEventListener('pointer
 }
 var grip;
 function drawGrip(){if(grip)grip.remove();if(!editing||selected.length!==1)return;grip=document.createElement('div');grip.className='report-size-grip';grip.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();startMove(e,selected,true)});selected[0].appendChild(grip)}
-tableNode.querySelector('#reportEditToggle').addEventListener('click',function(){editing=!editing;tableNode.classList.toggle('report-editing',editing);this.textContent=editing?'Xong chỉnh sửa':'Bật chỉnh sửa bố cục';if(!editing)setSelected([]);else setSelected([])});
+tableNode.querySelector('#reportEditToggle').addEventListener('click',function(){editing=!editing;tableNode.classList.toggle('report-editing',editing);this.textContent=editing?'Xong chỉnh sửa':'Bật chỉnh sửa bố cục';if(!editing)setSelected([]);else setSelected([]);drawGrip()});
 tableNode.addEventListener('pointerdown',function(e){
 if(!editing)return;
 if(e.target.classList.contains('report-size-grip'))return;
@@ -362,9 +362,9 @@ function move(ev){var x2=ev.clientX-b.left,y2=ev.clientY-b.top;rect.style.left=M
 function up(ev){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);var r=rect.getBoundingClientRect();rect.remove();var found=targets().filter(function(el){var q=el.getBoundingClientRect();return q.left>=r.left&&q.right<=r.right&&q.top>=r.top&&q.bottom<=r.bottom});setSelected(found);drawGrip()}
 document.addEventListener('pointermove',move);document.addEventListener('pointerup',up,{once:true})
 },true);
-function applyColor(color){selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.color=color;el.style.color=color});save()}
+function applyColor(color){selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.color=color;if(k==='chart'){var bg=el.querySelector('svg rect[data-edit-kind=background]');if(bg)bg.setAttribute('fill',color);el.style.backgroundColor=color}else el.style.color=color});save()}
 document.getElementById('reportColor').addEventListener('input',function(){applyColor(this.value)});
-document.getElementById('reportFontSize').addEventListener('input',function(){var v=this.value;document.getElementById('reportFontOut').textContent=v+' px';selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.font=Number(v);el.style.fontSize=v+'px'});save()});
+document.getElementById('reportFontSize').addEventListener('input',function(){var v=this.value;document.getElementById('reportFontOut').textContent=v+' px';selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.font=Number(v);el.style.fontSize=v+'px';if(k==='chart')el.querySelectorAll('svg text').forEach(function(t){t.style.fontSize=v+'px'})});save()});
 function applyDimension(id,prop,asPercent){var v=Number(document.getElementById(id).value);if(!Number.isFinite(v)||v<=0)return;selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s[prop]=v;if(prop==='width'&&!el.hasAttribute('data-report-id'))s.free=true;el.style[prop]=v+(asPercent?'%':'px')});save();drawGrip()}
 document.getElementById('reportWidth').addEventListener('change',function(){applyDimension('reportWidth','width',true)});
 document.getElementById('reportHeight').addEventListener('change',function(){applyDimension('reportHeight','height',false)});
