@@ -344,6 +344,7 @@ function targets(){return Array.from(tableNode.querySelectorAll('[data-report-id
 function setSelected(arr){var unique=Array.from(new Set(arr));selected=unique.filter(function(el){return !unique.some(function(other){return other!==el&&other.contains(el)})});targets().forEach(function(el){el.classList.toggle('report-selected',selected.indexOf(el)>=0)});var lab=document.getElementById('reportSelection'),names=selected.map(function(el){return getKey(el)});lab.textContent=names.length?names.join(', '):'Chưa chọn vùng';
 ['reportWidth','reportHeight','reportReset'].forEach(function(id){document.getElementById(id).disabled=!editing||!selected.length});
 if(selected.length===1){var el=selected[0],s=styles[getKey(el)]||{},rect=el.getBoundingClientRect(),box=canvas.getBoundingClientRect();document.getElementById('reportWidth').value=Math.round(el.hasAttribute('data-report-id')?rect.width/box.width*100:rect.width);document.getElementById('reportWidthUnit').textContent=el.hasAttribute('data-report-id')?'%':'px';document.getElementById('reportHeight').value=Math.round(rect.height)}
+syncFormat()
 }
 function persistPos(el){
 var key=getKey(el),r=el.getBoundingClientRect(),b=el.hasAttribute('data-report-id')?canvas.getBoundingClientRect():(el.closest('.report-item')||canvas).getBoundingClientRect();
@@ -371,9 +372,35 @@ function move(ev){var x2=ev.clientX-b.left,y2=ev.clientY-b.top;rect.style.left=M
 function up(ev){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);var r=rect.getBoundingClientRect();rect.remove();var found=targets().filter(function(el){var q=el.getBoundingClientRect();return q.left>=r.left&&q.right<=r.right&&q.top>=r.top&&q.bottom<=r.bottom});setSelected(found);drawGrip()}
 document.addEventListener('pointermove',move);document.addEventListener('pointerup',up,{once:true})
 },true);
-function applyColor(color){selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.color=color;if(k==='chart'){var bg=el.querySelector('svg rect[data-edit-kind=background]');if(bg)bg.setAttribute('fill',color);el.style.backgroundColor=color}else el.style.color=color});save()}
-
-document.getElementById('reportFontSize').addEventListener('input',function(){var v=this.value;document.getElementById('reportFontOut').textContent=v+' px';selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.font=Number(v);el.style.fontSize=v+'px';if(k==='chart')el.querySelectorAll('svg text').forEach(function(t){t.style.fontSize=v+'px'})});save()});
+function styleElement(el,key,prop,value){var s=styles[key]||(styles[key]={});s[prop]=value;
+if(prop==='color'){if(key==='chart'){var bg=el.querySelector('svg rect[data-edit-kind=background]');if(bg)bg.setAttribute('fill',value);el.style.backgroundColor=value}else el.style.color=value}
+else if(prop==='font')el.style.fontSize=value+'px';
+else if(prop==='weight')el.style.fontWeight=value;
+else if(prop==='italic')el.style.fontStyle=value;
+else if(prop==='align')el.style.textAlign=value;
+else if(prop==='family')el.style.fontFamily=value;
+if(key==='chart'&&prop!=='color'){el.querySelectorAll('svg text').forEach(function(t){if(prop==='font')t.style.fontSize=value+'px';else if(prop==='weight')t.style.fontWeight=value;else if(prop==='italic')t.style.fontStyle=value;else if(prop==='family')t.style.fontFamily=value})}
+}
+function applyFormat(prop,value){selected.forEach(function(el){styleElement(el,getKey(el),prop,value)});save();syncFormat()}
+function syncFormat(){
+var pop=tableNode.querySelector('.report-format-pop');if(!editing||!selected.length){pop.style.display='none';return}
+pop.style.display='flex';var el=selected[0],key=getKey(el),s=styles[key]||{};
+var fam=document.getElementById('reportFontFamily'),size=document.getElementById('reportFontSize'),color=document.getElementById('reportColor');
+fam.value=s.family||'Arial';size.value=s.font||parseInt(getComputedStyle(el).fontSize,10)||12;color.value=s.color||'#202b31';
+document.getElementById('reportBold').setAttribute('aria-pressed',String(selected.every(function(x){return(styles[getKey(x)]||{}).weight==='bold'})));
+document.getElementById('reportItalic').setAttribute('aria-pressed',String(selected.every(function(x){return(styles[getKey(x)]||{}).italic==='italic'})));
+var r=selected.map(function(x){return x.getBoundingClientRect()}).reduce(function(a,b){return{left:Math.min(a.left,b.left),right:Math.max(a.right,b.right),top:Math.min(a.top,b.top),bottom:Math.max(a.bottom,b.bottom)}});
+var width=pop.offsetWidth||430,height=pop.offsetHeight||40,left=Math.max(8,Math.min(window.innerWidth-width-8,r.left)),top=r.top>height+14?r.top-height-8:Math.min(window.innerHeight-height-8,r.bottom+8);
+pop.style.left=left+'px';pop.style.top=top+'px';
+}
+document.getElementById('reportFontSize').addEventListener('change',function(){var n=Number(this.value);if(Number.isFinite(n))applyFormat('font',Math.max(6,Math.min(48,n)))});
+document.getElementById('reportFontSize').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();this.blur()}});
+document.getElementById('reportFontFamily').addEventListener('change',function(){applyFormat('family',this.value)});
+document.getElementById('reportColor').addEventListener('input',function(){applyFormat('color',this.value)});
+document.getElementById('reportBold').addEventListener('click',function(){applyFormat('weight',this.getAttribute('aria-pressed')==='true'?'normal':'bold')});
+document.getElementById('reportItalic').addEventListener('click',function(){applyFormat('italic',this.getAttribute('aria-pressed')==='true'?'normal':'italic')});
+[['reportAlignLeft','left'],['reportAlignCenter','center'],['reportAlignRight','right']].forEach(function(pair){document.getElementById(pair[0]).addEventListener('click',function(){applyFormat('align',pair[1])})});
+window.addEventListener('scroll',syncFormat,true);window.addEventListener('resize',syncFormat);
 function applyDimension(id,prop,asPercent){var v=Number(document.getElementById(id).value);if(!Number.isFinite(v)||v<=0)return;selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={}),percent=asPercent&&el.hasAttribute('data-report-id');s[prop]=v;if(prop==='width')s.free=!percent;el.style[prop]=v+(percent?'%':'px')});save();drawGrip()}
 document.getElementById('reportWidth').addEventListener('change',function(){applyDimension('reportWidth','width',true)});
 document.getElementById('reportHeight').addEventListener('change',function(){applyDimension('reportHeight','height',false)});
