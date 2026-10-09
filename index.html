@@ -14,7 +14,36 @@
 .chartframe .chart-item .size-grip{display:none;position:absolute;z-index:9;right:1px;bottom:1px;width:26px;height:26px;border-radius:5px 0 4px 0;background:linear-gradient(135deg,transparent 0 38%,#176b63 39% 48%,#fff 49% 57%,#176b63 58% 68%,#fff 69% 77%,#176b63 78%);cursor:nwse-resize;touch-action:none}.chartframe.edit-mode .chart-item .size-grip{display:block}.chartframe .chart-item{resize:none!important}
 </style><style>
 .element-editor{grid-column:1/-1;display:grid;grid-template-columns:minmax(180px,1.3fr) repeat(3,minmax(115px,1fr)) auto;align-items:center;gap:8px;padding:9px;border:1px solid #d8e3e1;border-radius:7px;background:#f1f7f6}.element-editor strong{font-size:11px;color:#176b63}.element-editor>span{font-size:10px;color:#64737a;grid-column:1/-1}.element-editor label{display:flex;align-items:center;gap:5px;font-size:10px;color:#56646b}.element-editor input[type=color]{width:34px;height:24px;padding:1px;border:1px solid #ccd6d8;border-radius:4px}.element-editor input[type=range]{width:70px}.element-editor output{font-size:9px;color:#64737a}.element-editor button{font-size:10px;padding:7px}.chartframe svg [data-edit-kind]{cursor:pointer}.chartframe svg [data-edit-kind]:hover{filter:drop-shadow(0 0 2px #16756a)}@media(max-width:850px){.element-editor{grid-template-columns:1fr 1fr}.element-editor>span{grid-column:1/-1}.element-editor strong{grid-column:1/-1}}
-</style></head>
+</style>
+<style>
+/* Capability report layout */
+#capReport{display:none;background:#fff;color:#252525;padding:8px 14px 14px;font:12px/1.35 Arial,sans-serif}
+main.report-active>#capReport{display:block}
+main.report-active>.title-row,main.report-active>.tables,main.report-active>.ppm,main.report-active>.foot{display:none!important}
+.cap-report-head{text-align:center;margin:0 0 12px}
+.cap-report-head h2{font:bold 21px/1.25 Georgia,"Times New Roman",serif;margin:0}
+.cap-report-head p{margin:2px 0 0;color:#555;font-size:13px}
+.cap-report-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,1fr);gap:30px;align-items:start}
+.cap-report-plot h3,.cap-report-plot>p{text-align:center;margin:0;font-weight:400}
+.cap-report-plot h3{font-size:14px}.cap-report-plot>p{font-size:12px;color:#444;margin-bottom:2px}
+.cap-report-plot .chartframe.report-chartframe{display:block!important;height:370px!important;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:visible!important}
+.cap-report-plot .report-chartframe>.mini{display:none!important}
+.cap-report-plot .report-chartframe>.chart-item{left:0!important;top:0!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important}
+.cap-report-data{display:flex;flex-direction:column;gap:16px;padding-top:25px}
+.cap-report-table h3{text-align:center;font-size:13px;font-weight:400;margin:0;padding:0 4px 2px;border-bottom:1px solid #999}
+.cap-report-table table{width:100%;border-collapse:collapse;font-size:12px}
+.cap-report-table td{padding:1px 8px;line-height:1.35}
+.cap-report-table td:last-child{text-align:right;white-space:nowrap}
+.cap-report-table .report-group td{padding-top:5px;font-weight:600}
+.cap-report-table .report-subgroup td{padding-top:4px}
+.cap-report-legend{display:flex;flex-direction:column;gap:12px;margin:2px 0 0 5px;font-size:11px}
+.cap-report-legend>div{display:flex;align-items:center;gap:10px}
+.cap-report-legend i{display:inline-block;width:48px;border-top:2px solid #e33737;flex:none}
+.cap-report-legend i.potential{border-top:2px dashed #666}
+@media(max-width:850px){.cap-report-grid{grid-template-columns:1fr;gap:10px}.cap-report-data{padding-top:0}.cap-report-plot .chartframe.report-chartframe{height:330px!important}}
+</style>
+
+</head>
 <body><div class="app">
 <header class="head"><div class="brand"><div class="logo">F</div><div><h1>FryeFBU</h1><small>Process Capability · Phân tích năng lực quá trình</small></div></div><div class="head-actions"><label class="file">↑ Nhập CSV<input id="file" type="file" accept=".csv,text/csv"></label><button id="sample">Dữ liệu mẫu</button><button id="export">↓ Xuất CSV</button></div></header>
 <div class="layout"><aside class="panel inputs"><h2>Thiết lập phân tích</h2><div class="sub">Nhập giới hạn kỹ thuật và số liệu đo.</div><div class="fields"><div class="field"><label for="lsl">LSL · Giới hạn dưới</label><input id="lsl" type="number" step="any" value="-0.27"></div><div class="field"><label for="usl">USL · Giới hạn trên</label><input id="usl" type="number" step="any" value="0.33"></div><div class="field"><label for="target">Target · Mục tiêu (tùy chọn)</label><input id="target" type="number" step="any" placeholder="Không đặt"></div><div class="field"><label for="subgroup">Cỡ nhóm con</label><select id="subgroup"><option value="1">1 · dữ liệu đơn</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></div><div class="field wide"><label for="measurements">Số liệu đo · mỗi dòng một giá trị hoặc phân cách bằng dấu phẩy</label><textarea id="measurements" spellcheck="false">0.190
@@ -104,7 +133,7 @@ for(var z=0;z<=8;z++){var val=x0+(x1-x0)*z/8,xx=X(val);out+='<line x1="'+xx+'" y
 out+='<line x1="'+L+'" y1="'+(T+PH)+'" x2="'+(L+PW)+'" y2="'+(T+PH)+'" stroke="#555"/>';
 [[s.l,'LSL'],[s.u,'USL']].forEach(function(p){var x=X(p[0]);out+='<line x1="'+x+'" y1="'+T+'" x2="'+x+'" y2="'+(T+PH)+'" stroke="#d74646" stroke-width="1.7" stroke-dasharray="8 5"/><text x="'+x+'" y="'+(T-8)+'" text-anchor="middle" font-size="10" fill="#d74646">'+p[1]+'</text>'});
 function curve(m,sd,color,dash){if(!(sd>0))return'';var d='';for(var i=0;i<=140;i++){var x=x0+(x1-x0)*i/140,y=norm(x,m,sd),px=X(x),py=Y(y);d+=(i?'L':'M')+px.toFixed(1)+','+py.toFixed(1)}return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="2.5" '+(dash?'stroke-dasharray="7 4"':'')+'/>'}
-out+=curve(s.m,s.within,'#e33737',false)+curve(s.m,s.overall,'#202020',true);$('chart').innerHTML=out
+out+=curve(s.m,s.overall,'#e33737',false)+curve(s.m,s.within,'#666666',true);$('chart').innerHTML=out
 }
 $('run').addEventListener('click',compute);['measurements','lsl','usl','target','subgroup'].forEach(function(id){$(id).addEventListener('input',function(){clearTimeout(this._t);this._t=setTimeout(compute,150)});$(id).addEventListener('change',compute)});
 $('sample').onclick=function(){$('measurements').value=sample;$('lsl').value='-0.27';$('usl').value='0.33';$('target').value='';$('subgroup').value='5';compute()};
@@ -116,7 +145,7 @@ compute();
 <script>
 (function(){
 var frame=document.querySelector('.chartframe'),svg=document.getElementById('chart');if(!frame||!svg)return;
-var defs={fontSize:10,textColor:'#58636a',barColor:'#cdd1d2',withinColor:'#e33737',overallColor:'#202020',specColor:'#d74646',layout:{data:{x:1,y:21,w:21,h:56},chart:{x:23,y:2,w:54,h:96},cap:{x:78,y:14,w:21,h:72}}};
+var defs={fontSize:10,textColor:'#58636a',barColor:'#cdd1d2',withinColor:'#666666',overallColor:'#e33737',specColor:'#d74646',layout:{data:{x:1,y:21,w:21,h:56},chart:{x:23,y:2,w:54,h:96},cap:{x:78,y:14,w:21,h:72}}};
 var state;try{state=Object.assign({},defs,JSON.parse(localStorage.getItem('fryefbu-chart-style')||'{}'));state.layout=Object.assign({},defs.layout,state.layout||{});['data','chart','cap'].forEach(function(k){state.layout[k]=Object.assign({},defs.layout[k],state.layout[k]||{})})}catch(e){state=JSON.parse(JSON.stringify(defs))}
 var nodes={data:document.getElementById('processMini').closest('.mini'),cap:document.getElementById('capMini').closest('.mini')},widget=document.createElement('div');widget.className='chart-item';svg.parentNode.insertBefore(widget,svg);widget.appendChild(svg);nodes.chart=widget;
 function save(){try{localStorage.setItem('fryefbu-chart-style',JSON.stringify(state))}catch(e){}}
@@ -126,7 +155,7 @@ function posFromElement(key){var r=nodes[key].getBoundingClientRect(),b=frame.ge
 var ro=new ResizeObserver(function(entries){entries.forEach(function(entry){var k=Object.keys(nodes).find(function(q){return nodes[q]===entry.target});if(k&&frame.classList.contains('edit-mode'))posFromElement(k)})});Object.keys(nodes).forEach(function(k){ro.observe(nodes[k])});
 var size=$('fontSize'),out=$('fontOut');function $(id){return document.getElementById(id)}
 function applyText(){var n=Number(state.fontSize)||10;frame.querySelectorAll('svg text').forEach(function(el){el.setAttribute('font-size',String(n))});frame.querySelectorAll('.mini,.mini table,.mini td,.legend').forEach(function(el){el.style.fontSize=n+'px'});frame.querySelectorAll('.mini h3').forEach(function(el){el.style.fontSize=(n+1)+'px'});out.value=n+' px';size.value=n}
-function applyGraph(){frame.querySelectorAll('svg rect').forEach(function(el){if(el.getAttribute('stroke')==='#333')el.setAttribute('fill',state.barColor)});var paths=frame.querySelectorAll('svg path');if(paths[0])paths[0].setAttribute('stroke',state.withinColor);if(paths[1])paths[1].setAttribute('stroke',state.overallColor);frame.querySelectorAll('svg line[stroke-dasharray]').forEach(function(el){el.setAttribute('stroke',state.specColor)});frame.querySelectorAll('svg text').forEach(function(el){var t=el.textContent.trim();el.setAttribute('fill',(t==='LSL'||t==='USL')?state.specColor:state.textColor)});frame.querySelectorAll('.mini td,.mini h3,.legend').forEach(function(el){el.style.color=state.textColor});frame.querySelectorAll('.mini td:last-child').forEach(function(el){el.style.color=state.textColor})}
+function applyGraph(){frame.querySelectorAll('svg rect').forEach(function(el){if(el.getAttribute('stroke')==='#333')el.setAttribute('fill',state.barColor)});var paths=frame.querySelectorAll('svg path');if(paths[0])paths[0].setAttribute('stroke',state.withinColor);if(paths[1])paths[1].setAttribute('stroke',state.withinColor);frame.querySelectorAll('svg line[stroke-dasharray]').forEach(function(el){el.setAttribute('stroke',state.specColor)});frame.querySelectorAll('svg text').forEach(function(el){var t=el.textContent.trim();el.setAttribute('fill',(t==='LSL'||t==='USL')?state.specColor:state.textColor)});frame.querySelectorAll('.mini td,.mini h3,.legend').forEach(function(el){el.style.color=state.textColor});frame.querySelectorAll('.mini td:last-child').forEach(function(el){el.style.color=state.textColor})}
 function apply(){applyText();applyGraph();['textColor','barColor','withinColor','overallColor','specColor'].forEach(function(id){$(id).value=state[id]});save()}
 var mo=new MutationObserver(function(){applyGraph();applyText()});mo.observe(svg,{childList:true,subtree:true});['fontSize','textColor','barColor','withinColor','overallColor','specColor'].forEach(function(id){$(id).value=state[id];$(id).addEventListener('input',function(){state[id]=id==='fontSize'?Number(this.value):this.value;apply()})});
 size.addEventListener('input',function(){out.value=this.value+' px'});
@@ -203,7 +232,7 @@ function annotate(){
 var bg=svg.querySelector('[data-edit-kind="background"]');if(!bg){bg=document.createElementNS('http://www.w3.org/2000/svg','rect');bg.setAttribute('x','0');bg.setAttribute('y','0');bg.setAttribute('width','800');bg.setAttribute('height','370');bg.setAttribute('fill','#ffffff');bg.setAttribute('stroke','none');bg.setAttribute('data-edit-kind','background');bg.setAttribute('data-edit-index','0');svg.insertBefore(bg,svg.firstChild)}
 var rects=Array.from(svg.querySelectorAll('rect:not([data-edit-kind="background"])'));var bi=0;rects.forEach(function(el){var stroke=el.getAttribute('stroke');var kind=stroke==='#333'?'bar':stroke==='#176b63'?'box':'box';el.setAttribute('data-edit-kind',kind);el.setAttribute('data-edit-group',kind==='bar'?'allBars':'allBoxes');el.setAttribute('data-edit-index',String(bi++));el.setAttribute('data-edit-key',kind+':'+(bi-1))});
 var lineIndex=0;svg.querySelectorAll('line').forEach(function(el){var dash=el.getAttribute('stroke-dasharray'),st=el.getAttribute('stroke');var kind=dash?'spec':st==='#e9ecec'?'grid':'axis',group=kind==='grid'?'gridlines':kind==='axis'?'axisLines':'specLines';el.setAttribute('data-edit-kind',kind);el.setAttribute('data-edit-group',group);el.setAttribute('data-edit-index',String(lineIndex));el.setAttribute('data-edit-key',kind+':'+lineIndex);el.style.pointerEvents='stroke';lineIndex++});
-var paths=svg.querySelectorAll('path');paths.forEach(function(el,i){var kind=paths.length>1?(i===0?'within':'overall'):'series';el.setAttribute('data-edit-kind',kind);el.setAttribute('data-edit-group',kind);el.setAttribute('data-edit-index',String(i));el.setAttribute('data-edit-key',kind+':'+i);el.style.pointerEvents='stroke'});
+var paths=svg.querySelectorAll('path');paths.forEach(function(el,i){var kind=paths.length>1?(i===0?'overall':'within'):'series';el.setAttribute('data-edit-kind',kind);el.setAttribute('data-edit-group',kind);el.setAttribute('data-edit-index',String(i));el.setAttribute('data-edit-key',kind+':'+i);el.style.pointerEvents='stroke'});
 var textIndex=0;svg.querySelectorAll('text').forEach(function(el){var t=el.textContent.trim(),kind=(t==='LSL'||t==='USL')?'specLabel':'label',x=Number(el.getAttribute('x')),y=Number(el.getAttribute('y')),numeric=/^-?\d+(\.\d+)?%?$/.test(t),group=kind==='specLabel'?'specLabels':numeric&&y>=345?'xTickLabels':numeric&&x<85?'yTickLabels':'singleLabel';el.setAttribute('data-edit-kind',kind);el.setAttribute('data-edit-group',group);el.setAttribute('data-edit-index',String(textIndex));el.setAttribute('data-edit-key',kind+':'+textIndex);textIndex++});
 var circles=svg.querySelectorAll('circle');circles.forEach(function(el,i){el.setAttribute('data-edit-kind','point');el.setAttribute('data-edit-index',String(i));el.setAttribute('data-edit-key','point:'+i)});
 applyOverrides()
@@ -238,4 +267,61 @@ var x1=Number(line.getAttribute('x1')),y1=Number(line.getAttribute('y1')),x2=Num
 if(best&&bestD<=tol){e.stopImmediatePropagation();e.preventDefault();var handler=svg.__fryeSelectElement;if(handler)handler(best)}
 },true);
 })();
-</script></body></html>
+</script>
+<script>
+(function(){
+var main=document.querySelector('main.result'),frame=document.querySelector('.chartframe'),mode=document.getElementById('graphMode');
+if(!main||!frame||!mode)return;
+var tableNode=document.createElement('div');tableNode.id='capReport';
+tableNode.innerHTML='<header class="cap-report-head"><h2 id="capReportTitle" contenteditable="true" spellcheck="false">Capability Analysis for X</h2><p>Process Performance Report</p></header><div class="cap-report-grid"><section class="cap-report-plot"><h3>Capability Histogram</h3><p>Are the data inside the limits?</p><div class="cap-report-plothost"></div></section><aside class="cap-report-data"><section class="cap-report-table"><h3>Process Characterization</h3><table id="reportProcess"></table></section><section class="cap-report-table"><h3>Customer Requirements</h3><table id="reportCustomer"></table></section><section class="cap-report-table"><h3>Capability Statistics</h3><table id="reportStats"></table></section></aside></div><footer class="cap-report-legend"><div><i class="actual"></i><span>Actual (overall) capability is what the customer experiences.</span></div><div><i class="potential"></i><span>Potential (within) capability is what could be achieved if<br>process shifts and drifts were eliminated.</span></div></footer>';
+var toolbar=document.querySelector('.graph-tools'),tables=document.querySelector('.tables'),homeParent=frame.parentNode,homeNext=frame.nextSibling;
+if(toolbar&&toolbar.parentNode)toolbar.parentNode.insertBefore(tableNode,frame);
+var host=tableNode.querySelector('.cap-report-plothost'),title=document.getElementById('title'),reportTitle=tableNode.querySelector('#capReportTitle');
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function readTable(id){var o={};Array.from(document.getElementById(id).rows).forEach(function(r){if(r.cells.length>1)o[r.cells[0].textContent.trim()]=r.cells[1].textContent.trim()});return o}
+function rowsHTML(rows){return rows.map(function(r){return '<tr'+(r[2]?' class="'+r[2]+'"':'')+'><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>'}).join('')}
+function ppmCard(name){var a=Array.from(document.querySelectorAll('#ppm article')).find(function(x){return x.querySelector('h4')&&x.querySelector('h4').textContent.trim()===name});var o={};if(a)Array.from(a.querySelectorAll('p')).forEach(function(p){var s=p.querySelector('span'),b=p.querySelector('b');if(s&&b)o[s.textContent.trim()]=parseFloat(b.textContent)});return o}
+function val(x){var n=parseFloat(String(x==null?'':x).replace(',','.'));return Number.isFinite(n)?n:null}
+function fixed(x,d){var n=val(x);return n===null?'*':n.toFixed(d)}
+function update(){
+var p=readTable('process'),c=readTable('indices'),obs=ppmCard('Observed Performance'),within=ppmCard('Expected Within Performance'),overall=ppmCard('Expected Overall Performance');
+document.getElementById('reportProcess').innerHTML=rowsHTML([
+['Total N',p['Sample N']||'—'],['Subgroup size',document.getElementById('subgroup').value||'—'],['Mean',p['Sample Mean']||'—'],['Standard deviation (overall)',p['StDev (Overall)']||'—'],['Standard deviation (within)',p['StDev (Within)']||'—']
+]);
+document.getElementById('reportCustomer').innerHTML=rowsHTML([
+['Upper spec',p.USL||'—'],['Target',p.Target||'*'],['Lower spec',p.LSL||'—']
+]);
+function total(x){var n=x['PPM Total'];return Number.isFinite(n)?n:0}
+function ppmPct(x){return (total(x)/10000).toFixed(2)}
+function ppmRounded(x){return String(Math.round(total(x)))}
+document.getElementById('reportStats').innerHTML=rowsHTML([
+['Actual (overall)', '', 'report-group'],
+['Pp',fixed(c.Pp,2)],['Ppk',fixed(c.Ppk,2)],['Z.Bench',val(c.Ppk)===null?'*':(3*val(c.Ppk)).toFixed(2)],
+['% Out of spec (observed)',ppmPct(obs)],['% Out of spec (expected)',ppmPct(overall)],
+['PPM (DPMO) (observed)',ppmRounded(obs)],['PPM (DPMO) (expected)',ppmRounded(overall)],
+['Potential (within)', '', 'report-group'],
+['Cp',fixed(c.Cp,2)],['Cpk',fixed(c.Cpk,2)],['Z.Bench',val(c.Cpk)===null?'*':(3*val(c.Cpk)).toFixed(2)],
+['% Out of spec (expected)',ppmPct(within)],['PPM (DPMO) (expected)',ppmRounded(within)]
+]);
+var overallColor=document.getElementById('overallColor'),withinColor=document.getElementById('withinColor');
+var a=tableNode.querySelector('.actual'),q=tableNode.querySelector('.potential');
+if(overallColor)a.style.borderColor=overallColor.value;if(withinColor)q.style.borderColor=withinColor.value;
+if(title&&!reportTitle.matches(':focus'))reportTitle.textContent=title.textContent.replace(/^Process Capability of /,'Capability Analysis for ');
+}
+function toggle(){
+var active=mode.value==='capability';
+if(active){main.classList.add('report-active');tableNode.querySelector('.cap-report-plothost').appendChild(frame);frame.classList.add('report-chartframe');update()}
+else{main.classList.remove('report-active');frame.classList.remove('report-chartframe');if(homeParent)homeParent.insertBefore(frame,homeNext&&homeNext.parentNode===homeParent?homeNext:null)}
+}
+mode.addEventListener('change',function(){setTimeout(toggle,0)});
+document.getElementById('subgroup').addEventListener('change',update);
+['process','indices','ppm'].forEach(function(id){var el=document.getElementById(id);if(el)new MutationObserver(update).observe(el,{childList:true,subtree:true,characterData:true})});
+if(title)new MutationObserver(update).observe(title,{childList:true,subtree:true,characterData:true});
+reportTitle.addEventListener('input',function(){if(title)title.textContent=this.textContent.replace(/^Capability Analysis for /,'Process Capability of ')});
+var oldResize=document.getElementById('graphHeight');
+if(oldResize&&window.ResizeObserver)new ResizeObserver(update).observe(oldResize);
+toggle();setTimeout(update,100);
+})();
+</script>
+
+</body></html>
