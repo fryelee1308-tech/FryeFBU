@@ -20,27 +20,43 @@
 #capReport{display:none;background:#fff;color:#252525;padding:8px 14px 14px;font:12px/1.35 Arial,sans-serif}
 main.report-active>#capReport{display:block}
 main.report-active>.title-row,main.report-active>.tables,main.report-active>.ppm,main.report-active>.foot{display:none!important}
-.cap-report-head{text-align:center;margin:0 0 12px}
-.cap-report-head h2{font:bold 21px/1.25 Georgia,"Times New Roman",serif;margin:0}
-.cap-report-head p{margin:2px 0 0;color:#555;font-size:13px}
-.cap-report-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,1fr);gap:30px;align-items:start}
+.cap-report-head{display:contents}
+.cap-report-head h2,.cap-report-head p{margin:0;text-align:center}
+.cap-report-head h2{font:bold 21px/1.25 Georgia,"Times New Roman",serif}
+.cap-report-head p{font-size:13px;color:#555}
+.cap-report-grid{position:relative;display:block;height:790px;min-height:790px}
+.report-item{position:absolute;box-sizing:border-box;overflow:visible;touch-action:none}
+.cap-report-head [data-report-id],.cap-report-grid [data-report-id],.cap-report-legend [data-report-id]{text-align:inherit}
 .cap-report-plot h3,.cap-report-plot>p{text-align:center;margin:0;font-weight:400}
-.cap-report-plot h3{font-size:14px}.cap-report-plot>p{font-size:12px;color:#444;margin-bottom:2px}
+.cap-report-plot h3{font-size:14px}.cap-report-plot>p{font-size:12px;color:#444}
 .cap-report-plot .chartframe.report-chartframe{display:block!important;height:370px!important;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:visible!important}
 .cap-report-plot .report-chartframe>.mini{display:none!important}
 .cap-report-plot .report-chartframe>.chart-item{left:0!important;top:0!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important}
-.cap-report-data{display:flex;flex-direction:column;gap:16px;padding-top:25px}
+.cap-report-table{padding:4px 7px}
 .cap-report-table h3{text-align:center;font-size:13px;font-weight:400;margin:0;padding:0 4px 2px;border-bottom:1px solid #999}
 .cap-report-table table{width:100%;border-collapse:collapse;font-size:12px}
 .cap-report-table td{padding:1px 8px;line-height:1.35}
 .cap-report-table td:last-child{text-align:right;white-space:nowrap}
 .cap-report-table .report-group td{padding-top:5px;font-weight:600}
 .cap-report-table .report-subgroup td{padding-top:4px}
-.cap-report-legend{display:flex;flex-direction:column;gap:12px;margin:2px 0 0 5px;font-size:11px}
+.cap-report-legend{display:contents;font-size:11px}
 .cap-report-legend>div{display:flex;align-items:center;gap:10px}
 .cap-report-legend i{display:inline-block;width:48px;border-top:2px solid #e33737;flex:none}
 .cap-report-legend i.potential{border-top:2px dashed #666}
-@media(max-width:850px){.cap-report-grid{grid-template-columns:1fr;gap:10px}.cap-report-data{padding-top:0}.cap-report-plot .chartframe.report-chartframe{height:330px!important}}
+#capReport.report-editing [data-report-id]{outline:1px dashed #a6b7c0;outline-offset:2px;cursor:move}
+#capReport.report-editing [data-report-text-id]{cursor:move}
+#capReport.report-editing .report-selected{outline:2px solid #1677ff!important;outline-offset:3px;z-index:30}
+#capReport.report-editing [data-report-id="chart"]{overflow:visible}
+.report-editor{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 10px;margin:0 0 9px;border:1px solid #dce3e6;border-radius:7px;background:#f7f9f9;font:12px Arial,sans-serif}
+.report-editor label{display:flex;align-items:center;gap:4px}
+.report-editor input[type=number]{width:72px;padding:4px}
+.report-editor input[type=range]{width:92px}
+.report-editor button{padding:6px 9px}
+.report-editor .editor-help{color:#67767d;flex-basis:100%;font-size:11px}
+.report-editor .editor-selection{font-weight:600;color:#176b63}
+.report-marquee{position:absolute;z-index:99;border:1px solid #1680ff;background:#1680ff20;pointer-events:none}
+.report-size-grip{position:absolute;z-index:100;right:-7px;bottom:-7px;width:14px;height:14px;background:#1677ff;border:2px solid white;border-radius:3px;cursor:nwse-resize;touch-action:none}
+@media(max-width:850px){.cap-report-grid{height:1110px;min-height:1110px}.report-editor{position:sticky;top:4px;z-index:120}.cap-report-plot .chartframe.report-chartframe{height:330px!important}}
 </style>
 
 </head>
@@ -273,44 +289,40 @@ if(best&&bestD<=tol){e.stopImmediatePropagation();e.preventDefault();var handler
 var main=document.querySelector('main.result'),frame=document.querySelector('.chartframe'),mode=document.getElementById('graphMode');
 if(!main||!frame||!mode)return;
 var tableNode=document.createElement('div');tableNode.id='capReport';
-tableNode.innerHTML='<header class="cap-report-head"><h2 id="capReportTitle" contenteditable="true" spellcheck="false">Capability Analysis for X</h2><p>Process Performance Report</p></header><div class="cap-report-grid"><section class="cap-report-plot"><h3>Capability Histogram</h3><p>Are the data inside the limits?</p><div class="cap-report-plothost"></div></section><aside class="cap-report-data"><section class="cap-report-table"><h3>Process Characterization</h3><table id="reportProcess"></table></section><section class="cap-report-table"><h3>Customer Requirements</h3><table id="reportCustomer"></table></section><section class="cap-report-table"><h3>Capability Statistics</h3><table id="reportStats"></table></section></aside></div><footer class="cap-report-legend"><div><i class="actual"></i><span>Actual (overall) capability is what the customer experiences.</span></div><div><i class="potential"></i><span>Potential (within) capability is what could be achieved if<br>process shifts and drifts were eliminated.</span></div></footer>';
-var toolbar=document.querySelector('.graph-tools'),tables=document.querySelector('.tables'),homeParent=frame.parentNode,homeNext=frame.nextSibling;
+tableNode.innerHTML='<header class="cap-report-head"><h2 id="capReportTitle" contenteditable="true" spellcheck="false" data-report-id="title">Capability Analysis for X</h2><p data-report-id="subtitle">Process Performance Report</p></header><div class="report-editor"><button type="button" id="reportEditToggle">Bật chỉnh sửa bố cục</button><span class="editor-selection" id="reportSelection">Chưa chọn vùng</span><label>Màu <input id="reportColor" type="color" value="#202b31" disabled></label><label>Cỡ chữ <input id="reportFontSize" type="range" min="8" max="32" value="12" disabled><output id="reportFontOut">12 px</output></label><label>Rộng <input id="reportWidth" type="number" min="2" max="100" value="40" disabled>%</label><label>Cao <input id="reportHeight" type="number" min="12" max="790" value="100" disabled> px</label><button type="button" id="reportReset" disabled>Đặt lại vùng chọn</button><span class="editor-help">Bật chỉnh sửa rồi kéo vùng để di chuyển; kéo khoảng trống để quét chọn nhiều cụm, giữ Shift để thêm/bỏ vùng. Dùng màu, cỡ chữ, rộng/cao hoặc kéo nút xanh ở góc để chỉnh.</span></div><div class="cap-report-grid"><section class="cap-report-plot"><h3 data-report-id="plotTitle">Capability Histogram</h3><p data-report-id="plotQuestion">Are the data inside the limits?</p><div class="cap-report-plothost"></div></section><aside class="cap-report-data"><section class="cap-report-table" data-report-id="process"><h3>Process Characterization</h3><table id="reportProcess"></table></section><section class="cap-report-table" data-report-id="customer"><h3>Customer Requirements</h3><table id="reportCustomer"></table></section><section class="cap-report-table" data-report-id="stats"><h3>Capability Statistics</h3><table id="reportStats"></table></section></aside></div><footer class="cap-report-legend"><div data-report-id="legendActual"><i class="actual"></i><span>Actual (overall) capability is what the customer experiences.</span></div><div data-report-id="legendPotential"><i class="potential"></i><span>Potential (within) capability is what could be achieved if<br>process shifts and drifts were eliminated.</span></div></footer>';
+var toolbar=document.querySelector('.graph-tools'),frame=document.querySelector('.chartframe'),homeParent=frame.parentNode,homeNext=frame.nextSibling;
 if(toolbar&&toolbar.parentNode)toolbar.parentNode.insertBefore(tableNode,frame);
-var host=tableNode.querySelector('.cap-report-plothost'),title=document.getElementById('title'),reportTitle=tableNode.querySelector('#capReportTitle');
+var host=tableNode.querySelector('.cap-report-plothost'),title=document.getElementById('title'),reportTitle=tableNode.querySelector('#capReportTitle'),canvas=tableNode.querySelector('.cap-report-grid');
+var defaultLayout={title:{x:30,y:0,w:40,h:34},subtitle:{x:30,y:34,w:40,h:25},plotTitle:{x:0,y:70,w:53,h:25},plotQuestion:{x:0,y:96,w:53,h:22},chart:{x:0,y:122,w:53,h:370},process:{x:55,y:75,w:43,h:145},customer:{x:55,y:235,w:43,h:102},stats:{x:55,y:350,w:43,h:385},legendActual:{x:0,y:520,w:53,h:32},legendPotential:{x:0,y:562,w:53,h:58}};
+var saved;try{saved=JSON.parse(localStorage.getItem('fryefbu-report-layout')||'{}')}catch(e){saved={}}
+var positions=Object.assign({},defaultLayout,saved.positions||{}),styles=saved.styles||{},selected=[],editing=false;
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function save(){try{localStorage.setItem('fryefbu-report-layout',JSON.stringify({positions:positions,styles:styles}))}catch(e){}}
+function applyPos(el,key){var p=positions[key]||defaultLayout[key];if(!p)return;el.style.left=p.x+'%';el.style.top=p.y+'px';el.style.width=p.w+'%';el.style.height=p.h+'px'}
+function applyStyle(el,key){var s=styles[key]||{};if(s.color)el.style.color=s.color;if(s.font)el.style.fontSize=s.font+'px';if(s.width)el.style.width=s.width+(s.free?'px':'%');if(s.height)el.style.height=s.height+'px';if(s.x!=null&&s.y!=null){el.classList.add('report-free-item');el.style.left=s.x+'px';el.style.top=s.y+'px';el.style.position='absolute'}}
+function register(){
+tableNode.querySelectorAll('[data-report-id]').forEach(function(el){var key=el.getAttribute('data-report-id');el.classList.add('report-item');applyPos(el,key);applyStyle(el,key)});
+var graph=frame;graph.setAttribute('data-report-id','chart');graph.classList.add('report-item');host.appendChild(graph);applyPos(graph,'chart');applyStyle(graph,'chart');
+tableNode.querySelectorAll('.cap-report-table td').forEach(function(td){var row=td.parentElement,table=td.closest('table'),key=table.id+'-'+row.cells[0].textContent.trim()+'-'+td.cellIndex;td.setAttribute('data-report-text-id',key);applyStyle(td,key)});
+}
 function readTable(id){var o={};Array.from(document.getElementById(id).rows).forEach(function(r){if(r.cells.length>1)o[r.cells[0].textContent.trim()]=r.cells[1].textContent.trim()});return o}
-function rowsHTML(rows){return rows.map(function(r){return '<tr'+(r[2]?' class="'+r[2]+'"':'')+'><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>'}).join('')}
+function rowsHTML(rows,prefix){return rows.map(function(r){return '<tr'+(r[2]?' class="'+r[2]+'"':'')+'><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>'}).join('')}
 function ppmCard(name){var a=Array.from(document.querySelectorAll('#ppm article')).find(function(x){return x.querySelector('h4')&&x.querySelector('h4').textContent.trim()===name});var o={};if(a)Array.from(a.querySelectorAll('p')).forEach(function(p){var s=p.querySelector('span'),b=p.querySelector('b');if(s&&b)o[s.textContent.trim()]=parseFloat(b.textContent)});return o}
 function val(x){var n=parseFloat(String(x==null?'':x).replace(',','.'));return Number.isFinite(n)?n:null}
 function fixed(x,d){var n=val(x);return n===null?'*':n.toFixed(d)}
 function update(){
 var p=readTable('process'),c=readTable('indices'),obs=ppmCard('Observed Performance'),within=ppmCard('Expected Within Performance'),overall=ppmCard('Expected Overall Performance');
-document.getElementById('reportProcess').innerHTML=rowsHTML([
-['Total N',p['Sample N']||'—'],['Subgroup size',document.getElementById('subgroup').value||'—'],['Mean',p['Sample Mean']||'—'],['Standard deviation (overall)',p['StDev (Overall)']||'—'],['Standard deviation (within)',p['StDev (Within)']||'—']
-]);
-document.getElementById('reportCustomer').innerHTML=rowsHTML([
-['Upper spec',p.USL||'—'],['Target',p.Target||'*'],['Lower spec',p.LSL||'—']
-]);
-function total(x){var n=x['PPM Total'];return Number.isFinite(n)?n:0}
-function ppmPct(x){return (total(x)/10000).toFixed(2)}
-function ppmRounded(x){return String(Math.round(total(x)))}
-document.getElementById('reportStats').innerHTML=rowsHTML([
-['Actual (overall)', '', 'report-group'],
-['Pp',fixed(c.Pp,2)],['Ppk',fixed(c.Ppk,2)],['Z.Bench',val(c.Ppk)===null?'*':(3*val(c.Ppk)).toFixed(2)],
-['% Out of spec (observed)',ppmPct(obs)],['% Out of spec (expected)',ppmPct(overall)],
-['PPM (DPMO) (observed)',ppmRounded(obs)],['PPM (DPMO) (expected)',ppmRounded(overall)],
-['Potential (within)', '', 'report-group'],
-['Cp',fixed(c.Cp,2)],['Cpk',fixed(c.Cpk,2)],['Z.Bench',val(c.Cpk)===null?'*':(3*val(c.Cpk)).toFixed(2)],
-['% Out of spec (expected)',ppmPct(within)],['PPM (DPMO) (expected)',ppmRounded(within)]
-]);
-var overallColor=document.getElementById('overallColor'),withinColor=document.getElementById('withinColor');
-var a=tableNode.querySelector('.actual'),q=tableNode.querySelector('.potential');
-if(overallColor)a.style.borderColor=overallColor.value;if(withinColor)q.style.borderColor=withinColor.value;
+document.getElementById('reportProcess').innerHTML=rowsHTML([['Total N',p['Sample N']||'—'],['Subgroup size',document.getElementById('subgroup').value||'—'],['Mean',p['Sample Mean']||'—'],['Standard deviation (overall)',p['StDev (Overall)']||'—'],['Standard deviation (within)',p['StDev (Within)']||'—']]);
+document.getElementById('reportCustomer').innerHTML=rowsHTML([['Upper spec',p.USL||'—'],['Target',p.Target||'*'],['Lower spec',p.LSL||'—']]);
+function total(x){var n=x['PPM Total'];return Number.isFinite(n)?n:0}function ppmPct(x){return(total(x)/10000).toFixed(2)}function ppmRounded(x){return String(Math.round(total(x)))}
+document.getElementById('reportStats').innerHTML=rowsHTML([['Actual (overall)','', 'report-group'],['Pp',fixed(c.Pp,2)],['Ppk',fixed(c.Ppk,2)],['Z.Bench',val(c.Ppk)===null?'*':(3*val(c.Ppk)).toFixed(2)],['% Out of spec (observed)',ppmPct(obs)],['% Out of spec (expected)',ppmPct(overall)],['PPM (DPMO) (observed)',ppmRounded(obs)],['PPM (DPMO) (expected)',ppmRounded(overall)],['Potential (within)','', 'report-group'],['Cp',fixed(c.Cp,2)],['Cpk',fixed(c.Cpk,2)],['Z.Bench',val(c.Cpk)===null?'*':(3*val(c.Cpk)).toFixed(2)],['% Out of spec (expected)',ppmPct(within)],['PPM (DPMO) (expected)',ppmRounded(within)]]);
+register();
+var o=document.getElementById('overallColor'),w=document.getElementById('withinColor'),a=tableNode.querySelector('.actual'),q=tableNode.querySelector('.potential');if(o)a.style.borderColor=o.value;if(w)q.style.borderColor=w.value;
 if(title&&!reportTitle.matches(':focus'))reportTitle.textContent=title.textContent.replace(/^Process Capability of /,'Capability Analysis for ');
 }
 function toggle(){
 var active=mode.value==='capability';
-if(active){main.classList.add('report-active');tableNode.querySelector('.cap-report-plothost').appendChild(frame);frame.classList.add('report-chartframe');update()}
+if(active){main.classList.add('report-active');frame.classList.add('report-chartframe');register();update()}
 else{main.classList.remove('report-active');frame.classList.remove('report-chartframe');if(homeParent)homeParent.insertBefore(frame,homeNext&&homeNext.parentNode===homeParent?homeNext:null)}
 }
 mode.addEventListener('change',function(){setTimeout(toggle,0)});
@@ -318,8 +330,46 @@ document.getElementById('subgroup').addEventListener('change',update);
 ['process','indices','ppm'].forEach(function(id){var el=document.getElementById(id);if(el)new MutationObserver(update).observe(el,{childList:true,subtree:true,characterData:true})});
 if(title)new MutationObserver(update).observe(title,{childList:true,subtree:true,characterData:true});
 reportTitle.addEventListener('input',function(){if(title)title.textContent=this.textContent.replace(/^Capability Analysis for /,'Process Capability of ')});
-var oldResize=document.getElementById('graphHeight');
-if(oldResize&&window.ResizeObserver)new ResizeObserver(update).observe(oldResize);
+function getKey(el){return el.getAttribute('data-report-text-id')||el.getAttribute('data-report-id')}
+function targets(){return Array.from(tableNode.querySelectorAll('[data-report-id],[data-report-text-id]'))}
+function setSelected(arr){selected=Array.from(new Set(arr));targets().forEach(function(el){el.classList.toggle('report-selected',selected.indexOf(el)>=0)});var lab=document.getElementById('reportSelection'),names=selected.map(function(el){return getKey(el)});lab.textContent=names.length?names.join(', '):'Chưa chọn vùng';
+['reportColor','reportFontSize','reportWidth','reportHeight','reportReset'].forEach(function(id){document.getElementById(id).disabled=!editing||!selected.length});
+if(selected.length===1){var el=selected[0],s=styles[getKey(el)]||{},rect=el.getBoundingClientRect(),box=canvas.getBoundingClientRect();document.getElementById('reportColor').value=s.color||'#202b31';document.getElementById('reportFontSize').value=s.font||parseFloat(getComputedStyle(el).fontSize)||12;document.getElementById('reportFontOut').textContent=document.getElementById('reportFontSize').value+' px';document.getElementById('reportWidth').value=Math.round(rect.width/box.width*100);document.getElementById('reportHeight').value=Math.round(rect.height)}
+}
+function persistPos(el){
+var key=getKey(el),r=el.getBoundingClientRect(),b=canvas.getBoundingClientRect();
+if(el.hasAttribute('data-report-id'))positions[key]={x:+((r.left-b.left)/b.width*100).toFixed(2),y:+(r.top-b.top).toFixed(1),w:+(r.width/b.width*100).toFixed(2),h:+r.height.toFixed(1)};
+else{var s=styles[key]||(styles[key]={});s.free=true;s.x=+(r.left-b.left).toFixed(1);s.y=+(r.top-b.top).toFixed(1);s.width=+r.width.toFixed(1);s.height=+r.height.toFixed(1)}
+save()
+}
+function startMove(e,arr,resize){
+var b=canvas.getBoundingClientRect(),startX=e.clientX,startY=e.clientY,rs=arr.map(function(el){var r=el.getBoundingClientRect();return{el:el,x:r.left-b.left,y:r.top-b.top,w:r.width,h:r.height,root:el.hasAttribute('data-report-id')}});
+function move(ev){var dx=ev.clientX-startX,dy=ev.clientY-startY;if(resize){var base=rs[0],nw=Math.max(24,base.w+dx),nh=Math.max(18,base.h+dy),sx=nw/base.w,sy=nh/base.h;rs.forEach(function(q){var x=q.x,y=q.y,w=q.w,h=q.h;if(arr.length>1){q.el.style.left=(x*sx)+'px';q.el.style.top=(y*sy)+'px';q.el.style.width=(w*sx)+'px';q.el.style.height=(h*sy)+'px';q.el.style.position='absolute'}else{q.el.style.width=(w+dx)+'px';q.el.style.height=(h+dy)+'px'}})}else{rs.forEach(function(q){q.el.style.position='absolute';q.el.style.left=(q.x+dx)+'px';q.el.style.top=(q.y+dy)+'px'})}}
+function up(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);arr.forEach(persistPos);drawGrip();setSelected(selected)}
+document.addEventListener('pointermove',move);document.addEventListener('pointerup',up,{once:true})
+}
+var grip;
+function drawGrip(){if(grip)grip.remove();if(!editing||selected.length!==1)return;grip=document.createElement('div');grip.className='report-size-grip';grip.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();startMove(e,selected,true)});selected[0].appendChild(grip)}
+tableNode.querySelector('#reportEditToggle').addEventListener('click',function(){editing=!editing;tableNode.classList.toggle('report-editing',editing);this.textContent=editing?'Xong chỉnh sửa':'Bật chỉnh sửa bố cục';if(!editing)setSelected([]);else setSelected([])});
+tableNode.addEventListener('pointerdown',function(e){
+if(!editing)return;
+if(e.target.classList.contains('report-size-grip'))return;
+var t=e.target.closest('[data-report-text-id]')||e.target.closest('[data-report-id]');
+if(t){e.preventDefault();if(e.shiftKey){var a=selected.slice(),i=a.indexOf(t);if(i>=0)a.splice(i,1);else a.push(t);setSelected(a)}else if(selected.indexOf(t)<0)setSelected([t]);drawGrip();if(selected.indexOf(t)>=0)startMove(e,selected,false);return}
+if(e.target.closest('.report-editor'))return;
+e.preventDefault();setSelected([]);var rect=document.createElement('div'),b=canvas.getBoundingClientRect(),x=e.clientX-b.left,y=e.clientY-b.top;rect.className='report-marquee';rect.style.left=x+'px';rect.style.top=y+'px';canvas.appendChild(rect);
+function move(ev){var x2=ev.clientX-b.left,y2=ev.clientY-b.top;rect.style.left=Math.min(x,x2)+'px';rect.style.top=Math.min(y,y2)+'px';rect.style.width=Math.abs(x2-x)+'px';rect.style.height=Math.abs(y2-y)+'px'}
+function up(ev){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);var r=rect.getBoundingClientRect();rect.remove();var found=targets().filter(function(el){var q=el.getBoundingClientRect();return q.left>=r.left&&q.right<=r.right&&q.top>=r.top&&q.bottom<=r.bottom});setSelected(found);drawGrip()}
+document.addEventListener('pointermove',move);document.addEventListener('pointerup',up,{once:true})
+},true);
+function applyColor(color){selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.color=color;el.style.color=color});save()}
+document.getElementById('reportColor').addEventListener('input',function(){applyColor(this.value)});
+document.getElementById('reportFontSize').addEventListener('input',function(){var v=this.value;document.getElementById('reportFontOut').textContent=v+' px';selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s.font=Number(v);el.style.fontSize=v+'px'});save()});
+function applyDimension(id,prop,asPercent){var v=Number(document.getElementById(id).value);if(!Number.isFinite(v)||v<=0)return;selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={});s[prop]=v;if(prop==='width'&&!el.hasAttribute('data-report-id'))s.free=true;el.style[prop]=v+(asPercent?'%':'px')});save();drawGrip()}
+document.getElementById('reportWidth').addEventListener('change',function(){applyDimension('reportWidth','width',true)});
+document.getElementById('reportHeight').addEventListener('change',function(){applyDimension('reportHeight','height',false)});
+document.getElementById('reportReset').addEventListener('click',function(){selected.forEach(function(el){var k=getKey(el);delete styles[k];el.removeAttribute('style');if(el.hasAttribute('data-report-id'))applyPos(el,k)});save();setSelected(selected);drawGrip()});
+var oldResize=document.getElementById('graphHeight');if(oldResize&&window.ResizeObserver)new ResizeObserver(update).observe(oldResize);
 toggle();setTimeout(update,100);
 })();
 </script>
