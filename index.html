@@ -203,7 +203,7 @@ draw(a,{l:l,u:u,m:m,within:within,overall:overall});$('count').textContent=n+' q
 }catch(e){$('status').textContent='Lỗi: '+e.message}
 }
 function draw(a,s){
-var W=800,H=370,L=48,R=20,T=28,B=42,PW=W-L-R,PH=H-T-B,lo=Math.min(s.l,Math.min.apply(null,a)),hi=Math.max(s.u,Math.max.apply(null,a)),pad=(hi-lo)*.08||1,x0=lo-pad,x1=hi+pad,dataLo=Math.min.apply(null,a),dataHi=Math.max.apply(null,a),dataPad=(dataHi-dataLo)*.05||Math.max(Math.abs(dataLo)*.01,.01),histLo=dataLo-dataPad,histHi=dataHi+dataPad,k=Math.max(6,Math.min(12,Math.ceil(Math.sqrt(a.length)))),bw=(histHi-histLo)/k,bins=Array(k).fill(0);
+var W=800,H=370,L=48,R=20,T=28,B=42,PW=W-L-R,PH=H-T-B,dataLo=Math.min.apply(null,a),dataHi=Math.max.apply(null,a),dataPad=(dataHi-dataLo)*.08||Math.max(Math.abs(dataLo)*.01,.01),x0=dataLo-dataPad,x1=dataHi+dataPad,histLo=dataLo-dataPad*.6,histHi=dataHi+dataPad*.6,k=Math.max(6,Math.min(12,Math.ceil(Math.sqrt(a.length)))),bw=(histHi-histLo)/k,bins=Array(k).fill(0);
 a.forEach(function(v){var i=Math.floor((v-histLo)/bw);if(i>=0&&i<k)bins[Math.min(k-1,i)]++});
 var peak=Math.max.apply(null,bins.concat([1])),scale=a.length*bw;
 function norm(x,m,sd){return sd>0?scale/(sd*Math.sqrt(2*Math.PI))*Math.exp(-.5*Math.pow((x-m)/sd,2)):0}
@@ -214,7 +214,7 @@ for(var j=0;j<=4;j++){var yy=Y(peak*j/4);out+='<line x1="'+L+'" y1="'+yy+'" x2="
 bins.forEach(function(v,i){var bx=X(histLo+i*bw),bx2=X(histLo+(i+1)*bw),x=bx+1,w=Math.max(1,bx2-bx-2);if(v)out+='<rect x="'+x+'" y="'+Y(v)+'" width="'+w+'" height="'+(T+PH-Y(v))+'" fill="#cdd1d2" stroke="#333" stroke-width="1.2"/>'});
 for(var z=0;z<=8;z++){var val=x0+(x1-x0)*z/8,xx=X(val);out+='<line x1="'+xx+'" y1="'+(T+PH)+'" x2="'+xx+'" y2="'+(T+PH+4)+'" stroke="#555"/><text x="'+xx+'" y="'+(H-17)+'" text-anchor="middle" font-size="8" fill="#58636a">'+val.toFixed(2)+'</text>'}
 out+='<line x1="'+L+'" y1="'+(T+PH)+'" x2="'+(L+PW)+'" y2="'+(T+PH)+'" stroke="#555"/>';
-[[s.l,'LSL'],[s.u,'USL']].forEach(function(p){var x=X(p[0]);out+='<line x1="'+x+'" y1="'+T+'" x2="'+x+'" y2="'+(T+PH)+'" stroke="#d74646" stroke-width="1.7" stroke-dasharray="8 5"/><text x="'+x+'" y="'+(T-8)+'" text-anchor="middle" font-size="10" fill="#d74646">'+p[1]+'</text>'});
+[[s.l,'LSL'],[s.u,'USL']].forEach(function(p,idx){var outside=p[0]<x0||p[0]>x1,x=p[0]<x0?L:p[0]>x1?L+PW:X(p[0]),anchor=p[0]<x0?'start':p[0]>x1?'end':'middle',label=outside?(p[0]<x0?'← '+p[1]+' '+Number(p[0]).toPrecision(4):p[1]+' '+Number(p[0]).toPrecision(4)+' →'):p[1],yy=T-8+(outside&&((s.l<x0)===(s.u<x0))?idx*12:0);out+='<line x1="'+x+'" y1="'+T+'" x2="'+x+'" y2="'+(T+PH)+'" stroke="#d74646" stroke-width="1.7" stroke-dasharray="8 5"/><text x="'+(p[0]<x0?x+4:p[0]>x1?x-4:x)+'" y="'+yy+'" text-anchor="'+anchor+'" font-size="10" fill="#d74646">'+label+'</text>'});
 function curve(m,sd,color,dash){if(!(sd>0))return'';var d='';for(var i=0;i<=140;i++){var x=x0+(x1-x0)*i/140,y=norm(x,m,sd),px=X(x),py=Y(y);d+=(i?'L':'M')+px.toFixed(1)+','+py.toFixed(1)}return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="2.5" '+(dash?'stroke-dasharray="7 4"':'')+'/>'}
 out+=curve(s.m,s.overall,'#e33737',false)+curve(s.m,s.within,'#666666',true);$('chart').innerHTML=out
 }
