@@ -183,8 +183,8 @@ try{
 var a=vals(),n=a.length,l=Number($('lsl').value),u=Number($('usl').value),t=$('target').value===''?NaN:Number($('target').value),g=Number($('subgroup').value);
 var activeColumn=gridHeaders[Number($('dataColumn').value)||0]||'X';
 var chartTitle=$('title'),reportHeading=$('capReportTitle');
-if(/^Process Capability of (X|Y|C\\d+)$/.test(chartTitle.textContent)&&!chartTitle.matches(':focus'))chartTitle.textContent='Process Capability of '+activeColumn;
-if(/^Capability Analysis for (X|Y|C\\d+)$/.test(reportHeading.textContent)&&!reportHeading.matches(':focus'))reportHeading.textContent='Capability Analysis for '+activeColumn;
+if(/^Process Capability of (X|Y|C\d+)$/.test(chartTitle.textContent)&&!chartTitle.matches(':focus'))chartTitle.textContent='Process Capability of '+activeColumn;
+if(/^Capability Analysis for (X|Y|C\d+)$/.test(reportHeading.textContent)&&!reportHeading.matches(':focus'))reportHeading.textContent='Capability Analysis for '+activeColumn;
 if(n<2)throw Error('Nhập ít nhất 2 giá trị số.');if(!(l<u))throw Error('LSL phải nhỏ hơn USL.');
 var m=avg(a),overall=sd(a),within;
 if(g===1){var mr=a.slice(1).map(function(x,i){return Math.abs(x-a[i])});within=avg(mr)/1.128}
