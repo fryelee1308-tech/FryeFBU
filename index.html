@@ -219,11 +219,23 @@ width.value=o.width||el.getAttribute('stroke-width')||'1';document.getElementByI
 font.value=o.font||el.getAttribute('font-size')||'10';document.getElementById('elementFontOut').value=font.value+' px';
 width.disabled=isBg||isText;font.disabled=!isText
 }
-svg.addEventListener('click',function(e){var el=e.target.closest('[data-edit-key]');if(el){e.preventDefault();enableControls(el)}});
+svg.addEventListener('click',function(e){var el=e.target.closest('[data-edit-key]');if(el){e.preventDefault();enableControls(el)}});svg.__fryeSelectElement=enableControls;
 color.addEventListener('input',function(){if(!selected)return;overrides[selectedKey]=overrides[selectedKey]||{};overrides[selectedKey].color=this.value;save();applyOverrides()});
 width.addEventListener('input',function(){if(!selected||width.disabled)return;overrides[selectedKey]=overrides[selectedKey]||{};overrides[selectedKey].width=this.value;document.getElementById('elementWidthOut').value=this.value+' px';save();applyOverrides()});
 font.addEventListener('input',function(){if(!selected||font.disabled)return;overrides[selectedKey]=overrides[selectedKey]||{};overrides[selectedKey].font=this.value;document.getElementById('elementFontOut').value=this.value+' px';save();applyOverrides()});
 reset.addEventListener('click',function(){if(!selectedKey)return;delete overrides[selectedKey];save();annotate();var el=svg.querySelector('[data-edit-key="'+selectedKey+'"]');if(el)enableControls(el)});
 var mo=new MutationObserver(annotate);mo.observe(svg,{childList:true,subtree:true});annotate()
+})();
+</script><script>
+(function(){
+var svg=document.getElementById('chart'),frame=document.querySelector('.chartframe');if(!svg||!frame)return;
+svg.addEventListener('click',function(e){
+var direct=e.target.closest('[data-edit-key]');if(direct&&direct.getAttribute('data-edit-kind')!=='background')return;
+var ctm=svg.getScreenCTM();if(!ctm)return;var pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;var p=pt.matrixTransform(ctm.inverse()),rect=svg.getBoundingClientRect(),tol=Math.max(8,12*800/Math.max(1,rect.width)),best=null,bestD=Infinity;
+svg.querySelectorAll('line[data-edit-kind="axis"],line[data-edit-kind="grid"],line[data-edit-kind="spec"]').forEach(function(line){
+var x1=Number(line.getAttribute('x1')),y1=Number(line.getAttribute('y1')),x2=Number(line.getAttribute('x2')),y2=Number(line.getAttribute('y2')),dx=x2-x1,dy=y2-y1,len=dx*dx+dy*dy,t=len?Math.max(0,Math.min(1,((p.x-x1)*dx+(p.y-y1)*dy)/len)):0,dist=Math.hypot(p.x-(x1+t*dx),p.y-(y1+t*dy));if(dist<bestD){bestD=dist;best=line}
+});
+if(best&&bestD<=tol){e.stopImmediatePropagation();e.preventDefault();var handler=svg.__fryeSelectElement;if(handler)handler(best)}
+},true);
 })();
 </script></body></html>
