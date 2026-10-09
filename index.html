@@ -386,9 +386,9 @@ function syncFormat(){
 var pop=tableNode.querySelector('.report-format-pop');if(!editing||!selected.length){pop.style.display='none';return}
 pop.style.display='flex';var el=selected[0],key=getKey(el),s=styles[key]||{};
 var fam=document.getElementById('reportFontFamily'),size=document.getElementById('reportFontSize'),color=document.getElementById('reportColor');
-fam.value=s.family||'Arial';size.value=s.font||parseInt(getComputedStyle(el).fontSize,10)||12;color.value=s.color||'#202b31';
-document.getElementById('reportBold').setAttribute('aria-pressed',String(selected.every(function(x){return(styles[getKey(x)]||{}).weight==='bold'})));
-document.getElementById('reportItalic').setAttribute('aria-pressed',String(selected.every(function(x){return(styles[getKey(x)]||{}).italic==='italic'})));
+var computed=getComputedStyle(el),families=Array.from(fam.options),wanted=(s.family||computed.fontFamily).toLowerCase(),match=families.find(function(o){return wanted.indexOf(o.value.toLowerCase())>=0});fam.value=match?match.value:'Arial';size.value=s.font||parseInt(computed.fontSize,10)||12;color.value=s.color||'#202b31';
+document.getElementById('reportBold').setAttribute('aria-pressed',String(selected.every(function(x){var v=(styles[getKey(x)]||{}).weight||getComputedStyle(x).fontWeight;return v==='bold'||Number(v)>=600})));
+document.getElementById('reportItalic').setAttribute('aria-pressed',String(selected.every(function(x){return((styles[getKey(x)]||{}).italic||getComputedStyle(x).fontStyle)==='italic'})));
 var r=selected.map(function(x){return x.getBoundingClientRect()}).reduce(function(a,b){return{left:Math.min(a.left,b.left),right:Math.max(a.right,b.right),top:Math.min(a.top,b.top),bottom:Math.max(a.bottom,b.bottom)}});
 var width=pop.offsetWidth||430,height=pop.offsetHeight||40,left=Math.max(8,Math.min(window.innerWidth-width-8,r.left)),top=r.top>height+14?r.top-height-8:Math.min(window.innerHeight-height-8,r.bottom+8);
 pop.style.left=left+'px';pop.style.top=top+'px';
