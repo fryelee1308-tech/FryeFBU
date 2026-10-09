@@ -68,9 +68,12 @@ main.report-active>.title-row,main.report-active>.tables,main.report-active>.ppm
 .report-format-pop button:hover,.report-format-pop button[aria-pressed=true]{background:#e8f0fe;border-color:#8ab4f8}
 .report-format-pop .format-color{position:relative;display:grid;place-items:center;width:30px;height:28px;margin-left:2px;font-weight:bold;border-bottom:3px solid #222;cursor:pointer}
 .report-format-pop .format-color input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+</style><style>
+.head-actions select{border:1px solid #d9e0e2;border-radius:7px;padding:9px 10px;background:#fff;color:#344149;font:600 12px "Segoe UI",Arial;cursor:pointer}
+@media print{ @page{size:A4 landscape;margin:8mm}.head,.inputs,.customizer,.graph-tools,.report-editor,.report-format-pop,.report-size-grip,.drag-handle{display:none!important}.layout{display:block!important}.result{padding:0!important;margin:0!important;border:0!important;box-shadow:none!important;background:#fff!important}main.report-active>#capReport{display:block!important}.cap-report-grid{break-inside:avoid}.cap-report-table{break-inside:avoid}body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head>
 <body><div class="app">
-<header class="head"><div class="brand"><div class="logo">F</div><div><h1>FryeFBU</h1><small>Process Capability · Phân tích năng lực quá trình</small></div></div><div class="head-actions"><label class="file">↑ Nhập CSV<input id="file" type="file" accept=".csv,text/csv"></label><button id="sample">Dữ liệu mẫu</button><button id="export">↓ Xuất CSV</button></div></header>
+<header class="head"><div class="brand"><div class="logo">F</div><div><h1>FryeFBU</h1><small>Process Capability · Phân tích năng lực quá trình</small></div></div><div class="head-actions"><select id="languageSelect" aria-label="Language"><option value="vi">Tiếng Việt</option><option value="en">English</option><option value="zh">中文</option></select><select id="reportExportSelect" aria-label="Export report"><option value="">Xuất PPT / PDF</option><option value="pptx">PowerPoint (.pptx)</option><option value="pdf">PDF (.pdf)</option></select><label class="file">↑ Nhập CSV<input id="file" type="file" accept=".csv,text/csv"></label><button id="sample">Dữ liệu mẫu</button><button id="export">↓ Xuất CSV</button></div></header>
 <div class="layout"><aside class="panel inputs"><h2>Thiết lập phân tích</h2><div class="sub">Nhập giới hạn kỹ thuật và số liệu đo.</div><div class="fields"><div class="field"><label for="lsl">LSL · Giới hạn dưới</label><input id="lsl" type="number" step="any" value="-0.27"></div><div class="field"><label for="usl">USL · Giới hạn trên</label><input id="usl" type="number" step="any" value="0.33"></div><div class="field"><label for="target">Target · Mục tiêu (tùy chọn)</label><input id="target" type="number" step="any" placeholder="Không đặt"></div><div class="field"><label for="subgroup">Cỡ nhóm con</label><select id="subgroup"><option value="1">1 · dữ liệu đơn</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></div><div class="field wide"><label for="measurements">Số liệu đo · mỗi dòng một giá trị hoặc phân cách bằng dấu phẩy</label><textarea id="measurements" spellcheck="false">0.190
 0.210
 0.180
@@ -315,7 +318,7 @@ var graph=frame;graph.setAttribute('data-report-id','chart');graph.classList.add
 tableNode.querySelectorAll('.cap-report-table h3').forEach(function(el){var key='heading-'+el.parentElement.getAttribute('data-report-id');el.setAttribute('data-report-text-id',key);applyStyle(el,key)});tableNode.querySelectorAll('.cap-report-table td').forEach(function(td){var row=td.parentElement,table=td.closest('table'),key=table.id+'-'+row.cells[0].textContent.trim()+'-'+row.rowIndex+'-'+td.cellIndex;td.setAttribute('data-report-text-id',key);applyStyle(td,key)});
 }
 function readTable(id){var o={};Array.from(document.getElementById(id).rows).forEach(function(r){if(r.cells.length>1)o[r.cells[0].textContent.trim()]=r.cells[1].textContent.trim()});return o}
-function rowsHTML(rows,prefix){return rows.map(function(r){return '<tr'+(r[2]?' class="'+r[2]+'"':'')+'><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>'}).join('')}
+function rowsHTML(rows,prefix){return rows.map(function(r){var label=window.fryeTranslate?window.fryeTranslate(r[0]):r[0];return '<tr'+(r[2]?' class="'+r[2]+'"':'')+'><td>'+esc(label)+'</td><td>'+esc(r[1])+'</td></tr>'}).join('')}
 function ppmCard(name){var a=Array.from(document.querySelectorAll('#ppm article')).find(function(x){return x.querySelector('h4')&&x.querySelector('h4').textContent.trim()===name});var o={};if(a)Array.from(a.querySelectorAll('p')).forEach(function(p){var s=p.querySelector('span'),b=p.querySelector('b');if(s&&b)o[s.textContent.trim()]=parseFloat(b.textContent)});return o}
 function val(x){var n=parseFloat(String(x==null?'':x).replace(',','.'));return Number.isFinite(n)?n:null}
 function fixed(x,d){var n=val(x);return n===null?'*':n.toFixed(d)}
@@ -406,7 +409,94 @@ document.getElementById('reportWidth').addEventListener('change',function(){appl
 document.getElementById('reportHeight').addEventListener('change',function(){applyDimension('reportHeight','height',false)});
 document.getElementById('reportReset').addEventListener('click',function(){selected.forEach(function(el){var k=getKey(el);delete styles[k];el.removeAttribute('style');if(el.hasAttribute('data-report-id'))applyPos(el,k)});save();setSelected(selected);drawGrip()});
 var oldResize=document.getElementById('graphHeight');if(oldResize&&window.ResizeObserver)new ResizeObserver(update).observe(oldResize);
-toggle();setTimeout(update,100);
+
+var languageSelect=document.getElementById('languageSelect'),exportSelect=document.getElementById('reportExportSelect');
+var currentLanguage=localStorage.getItem('fryefbu-language')||'vi';
+var phrases=[
+['Process Capability · Phân tích năng lực quá trình','Process Capability Analysis','过程能力分析'],
+['↑ Nhập CSV','↑ Import CSV','↑ 导入 CSV'],['Dữ liệu mẫu','Sample data','示例数据'],['↓ Xuất CSV','↓ Export CSV','↓ 导出 CSV'],['Xuất PPT / PDF','Export PPT / PDF','导出 PPT / PDF'],
+['Thiết lập phân tích','Analysis setup','分析设置'],['Nhập giới hạn kỹ thuật và số liệu đo.','Enter specification limits and measurements.','输入规格限和测量数据。'],
+['LSL · Giới hạn dưới','LSL · Lower spec','LSL · 下规格限'],['USL · Giới hạn trên','USL · Upper spec','USL · 上规格限'],['Target · Mục tiêu (tùy chọn)','Target (optional)','目标值（可选）'],['Cỡ nhóm con','Subgroup size','子组大小'],['Số liệu đo · mỗi dòng một giá trị hoặc phân cách bằng dấu phẩy','Measurements · one per line or comma-separated','测量值 · 每行一个或用逗号分隔'],
+['Có thể dán trực tiếp số liệu từ Excel.','Paste data directly from Excel.','可直接从 Excel 粘贴数据。'],['Tính năng lực quá trình','Calculate process capability','计算过程能力'],['Tùy chỉnh biểu đồ','Customize chart','自定义图表'],['Biểu đồ / phân tích','Chart / analysis','图表 / 分析'],['Process Capability','Process Capability','过程能力'],['Histogram','Histogram','直方图'],['Dotplot','Dotplot','点图'],['Boxplot','Boxplot','箱线图'],['Individual Value Plot','Individual Value Plot','单值图'],['Line Plot','Line Plot','折线图'],['Probability Plot','Probability Plot','概率图'],['Empirical CDF','Empirical CDF','经验累积分布'],
+['Process Data','Process Data','过程数据'],['Capability','Capability','能力'],['Process Data · Dữ liệu quá trình','Process data','过程数据'],['Capability Indices · Chỉ số năng lực','Capability indices','能力指数'],['Observed Performance','Observed performance','观测性能'],['Expected Within Performance','Expected within performance','预期组内性能'],['Expected Overall Performance','Expected overall performance','预期总体性能'],
+['Capability Analysis for X','Capability Analysis for X','X 的能力分析'],['Process Performance Report','Process Performance Report','过程绩效报告'],['Process Characterization','Process characterization','过程特性'],['Customer Requirements','Customer requirements','客户要求'],['Capability Statistics','Capability statistics','能力统计'],['Total N','Total N','总样本数'],['Subgroup size','Subgroup size','子组大小'],['Mean','Mean','均值'],['Standard deviation (overall)','Standard deviation (overall)','标准差（总体）'],['Standard deviation (within)','Standard deviation (within)','标准差（组内）'],['Upper spec','Upper spec','上规格限'],['Target','Target','目标值'],['Lower spec','Lower spec','下规格限'],['Actual (overall)','Actual (overall)','实际（总体）'],['Potential (within)','Potential (within)','潜在（组内）'],['% Out of spec (observed)','% Out of spec (observed)','超出规格百分比（观测）'],['% Out of spec (expected)','% Out of spec (expected)','超出规格百分比（预期）'],['PPM (DPMO) (observed)','PPM (DPMO) (observed)','PPM（DPMO）（观测）'],['PPM (DPMO) (expected)','PPM (DPMO) (expected)','PPM（DPMO）（预期）'],['Z.Bench','Z.Bench','基准 Z 值'],
+['Actual (overall) capability is what the customer experiences.','Actual (overall) capability is what the customer experiences.','实际（总体）能力代表客户体验到的过程表现。'],['Potential (within) capability is what could be achieved if','Potential (within) capability is what could be achieved if','如果消除过程偏移和漂移，潜在（组内）能力'],['process shifts and drifts were eliminated.','process shifts and drifts were eliminated.','可以达到的水平。'],
+['Bật chỉnh sửa bố cục','Edit layout','编辑布局'],['Xong chỉnh sửa','Finish editing','完成编辑'],['Chưa chọn vùng','No region selected','未选择区域'],['Màu sắc/chữ: nhấn vùng để mở thanh định dạng','Format: select a region to open toolbar','格式：选择区域以打开工具栏'],['Đặt lại vùng chọn','Reset selected region','重置所选区域'],
+['↑ Nhập CSV','↑ Import CSV','↑ 导入 CSV'],['Có thể dán trực tiếp số liệu từ Excel.','Paste data directly from Excel.','可直接从 Excel 粘贴数据。'],['Sẵn sàng','Ready','就绪']
+];
+function translated(value,lang){for(var i=0;i<phrases.length;i++)if(phrases[i].indexOf(value)>=0)return phrases[i][lang==='en'?1:lang==='zh'?2:0];return value}
+window.fryeTranslate=function(value){return translated(String(value),currentLanguage)};
+function applyLanguage(lang){
+currentLanguage=lang;document.documentElement.lang=lang==='zh'?'zh-CN':lang;
+var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),node;
+while((node=walker.nextNode())){if(node.parentElement&&/^(SCRIPT|STYLE)$/.test(node.parentElement.tagName))continue;var old=node.nodeValue.trim();if(!old)continue;var next=translated(old,lang);if(next!==old)node.nodeValue=node.nodeValue.replace(old,next)}
+document.querySelectorAll('#lsl,#usl').forEach(function(x){});
+var target=document.getElementById('target');if(target)target.placeholder=lang==='vi'?'Không đặt':lang==='en'?'Not set':'未设置';
+var file=document.getElementById('file');if(file&&file.parentElement){var t=Array.from(file.parentElement.childNodes).find(function(x){return x.nodeType===3});if(t)t.nodeValue=lang==='vi'?'↑ Nhập CSV':lang==='en'?'↑ Import CSV':'↑ 导入 CSV'}
+var modeLabel=document.querySelector('label[for="graphMode"]');if(modeLabel)modeLabel.textContent=lang==='vi'?'Biểu đồ / phân tích':lang==='en'?'Chart / analysis':'图表 / 分析';
+var customSummary=document.querySelector('.customizer summary');if(customSummary)customSummary.textContent=lang==='vi'?'Tùy chỉnh biểu đồ':lang==='en'?'Customize chart':'自定义图表';
+var status=document.getElementById('status');if(status){var s=status.textContent;if(s.indexOf('Đã tính xong')===0)status.textContent=lang==='vi'?s:lang==='en'?'Calculation complete · '+s.match(/\d+/)[0]+' valid values':'计算完成 · '+s.match(/\d+/)[0]+' 个有效值';else if(s==='Sẵn sàng'||s==='Ready'||s==='就绪')status.textContent=lang==='vi'?'Sẵn sàng':lang==='en'?'Ready':'就绪'}
+}
+languageSelect.value=currentLanguage;
+languageSelect.addEventListener('change',function(){currentLanguage=this.value;localStorage.setItem('fryefbu-language',currentLanguage);applyLanguage(currentLanguage);update()});
+function captureReport(){
+return new Promise(function(resolve,reject){
+if(!main.classList.contains('report-active')){reject(Error('Chọn Process Capability trước khi xuất báo cáo.'));return}
+var source=tableNode.cloneNode(true);source.querySelectorAll('.report-editor,.report-format-pop,.report-size-grip,.drag-handle').forEach(function(x){x.remove()});source.classList.remove('report-editing');source.querySelectorAll('.report-selected').forEach(function(x){x.classList.remove('report-selected')});source.querySelectorAll('[contenteditable]').forEach(function(x){x.removeAttribute('contenteditable')});
+var W=1600,H=830;source.style.cssText='display:block!important;position:absolute!important;left:0!important;top:0!important;width:'+W+'px!important;height:'+H+'px!important;padding:16px!important;box-sizing:border-box!important;overflow:hidden!important;background:#fff!important';
+var stylesText=Array.from(document.querySelectorAll('style')).map(function(x){return x.textContent}).join('\n');
+var extra='#capReport{display:block!important;width:'+W+'px!important;height:'+H+'px!important;padding:16px!important;box-sizing:border-box!important;overflow:hidden!important;background:#fff!important}.cap-report-grid{height:790px!important;min-height:790px!important;width:100%!important}.report-item{box-sizing:border-box!important}';
+var svg='<svg xmlns="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><foreignObject x="0" y="0" width="'+W+'" height="'+H+'"><div xmlns="http://www.w3.org/1999/xhtml"><style>'+stylesText+extra+'</style>'+source.outerHTML+'</div></foreignObject></svg>';
+var url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'})),img=new Image();
+img.onload=function(){try{var c=document.createElement('canvas');c.width=W;c.height=H;var ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.drawImage(img,0,0,W,H);URL.revokeObjectURL(url);resolve(c)}catch(e){URL.revokeObjectURL(url);reject(e)}};
+img.onerror=function(){URL.revokeObjectURL(url);reject(Error('Không dựng được ảnh báo cáo để xuất.'))};img.src=url;
+})
+}
+function download(blob,name){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)}
+function concat(arrays){var n=arrays.reduce(function(s,x){return s+x.length},0),o=new Uint8Array(n),p=0;arrays.forEach(function(x){o.set(x,p);p+=x.length});return o}
+function u16(n){return new Uint8Array([n&255,(n>>>8)&255])}function u32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255])}
+function zipStore(files){
+var enc=new TextEncoder(),locals=[],centrals=[],offset=0,table=Uint32Array.from({length:256},function(_,i){var c=i;for(var k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;return c>>>0});
+function crc(bytes){var c=0xffffffff;for(var i=0;i<bytes.length;i++)c=table[(c^bytes[i])&255]^(c>>>8);return(c^0xffffffff)>>>0}
+files.forEach(function(file){var name=enc.encode(file.name),data=typeof file.data==='string'?enc.encode(file.data):file.data,check=crc(data);
+var local=concat([u32(0x04034b50),u16(20),u16(0x800),u16(0),u16(0),u16(0),u32(check),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data]);locals.push(local);
+var central=concat([u32(0x02014b50),u16(20),u16(20),u16(0x800),u16(0),u16(0),u16(0),u32(check),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name]);centrals.push(central);offset+=local.length});
+var cd=concat(centrals),end=concat([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(cd.length),u32(offset),u16(0)]);
+return new Blob([concat(locals),cd,end],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'})
+}
+function makePptx(canvasImage){
+var b64=canvasImage.toDataURL('image/png').split(',')[1],bin=atob(b64),png=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)png[i]=bin.charCodeAt(i);
+var presNs='http://schemas.openxmlformats.org/presentationml/2006/main',relNs='http://schemas.openxmlformats.org/officeDocument/2006/relationships',drawNs='http://schemas.openxmlformats.org/drawingml/2006/main';
+var slide='<p:sld xmlns:a="'+drawNs+'" xmlns:r="'+relNs+'" xmlns:p="'+presNs+'"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr><p:pic><p:nvPicPr><p:cNvPr id="2" name="Capability report"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rId2"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="12192000" cy="6858000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>';
+var presentation='<p:presentation xmlns:a="'+drawNs+'" xmlns:r="'+relNs+'" xmlns:p="'+presNs+'"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst><p:sldId id="256" r:id="rId2"/></p:sldIdLst><p:sldSz cx="12192000" cy="6858000" type="wide"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>';
+var tree='<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree>';
+var master='<p:sldMaster xmlns:a="'+drawNs+'" xmlns:r="'+relNs+'" xmlns:p="'+presNs+'"><p:cSld>'+tree+'</p:cSld><p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/><p:sldLayoutIdLst><p:sldLayoutId id="1" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle/></p:txStyles></p:sldMaster>';
+var layout='<p:sldLayout xmlns:a="'+drawNs+'" xmlns:r="'+relNs+'" xmlns:p="'+presNs+'" type="blank" preserve="1"><p:cSld name="Blank">'+tree+'</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>';
+var theme='<a:theme xmlns:a="'+drawNs+'" name="FryeFBU"><a:themeElements><a:clrScheme name="FryeFBU"><a:dk1><a:srgbClr val="202B31"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="44546A"/></a:dk2><a:lt2><a:srgbClr val="E7E6E6"/></a:lt2><a:accent1><a:srgbClr val="176B63"/></a:accent1><a:accent2><a:srgbClr val="E33737"/></a:accent2><a:accent3><a:srgbClr val="666666"/></a:accent3><a:accent4><a:srgbClr val="5B9BD5"/></a:accent4><a:accent5><a:srgbClr val="70AD47"/></a:accent5><a:accent6><a:srgbClr val="FFC000"/></a:accent6><a:hlink><a:srgbClr val="0563C1"/></a:hlink><a:folHlink><a:srgbClr val="954F72"/></a:folHlink></a:clrScheme><a:fontScheme name="FryeFBU"><a:majorFont><a:latin typeface="Arial"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Arial"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme><a:fmtScheme name="FryeFBU"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="6350"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements><a:objectDefaults/><a:extraClrSchemeLst/></a:theme>';
+var rels=(function(items){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+items.map(function(x){return '<Relationship Id="'+x[0]+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/'+x[1]+'" Target="'+x[2]+'"/>'}).join('')+'</Relationships>'});
+var files=[
+{name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/></Types>'},
+{name:'_rels/.rels',data:rels([['rId1','officeDocument','ppt/presentation.xml']])},
+{name:'ppt/presentation.xml',data:presentation},
+{name:'ppt/_rels/presentation.xml.rels',data:rels([['rId1','slideMaster','slideMasters/slideMaster1.xml'],['rId2','slide','slides/slide1.xml']])},
+{name:'ppt/slides/slide1.xml',data:slide},
+{name:'ppt/slides/_rels/slide1.xml.rels',data:rels([['rId1','slideLayout','../slideLayouts/slideLayout1.xml'],['rId2','image','../media/image1.png']])},
+{name:'ppt/slideMasters/slideMaster1.xml',data:master},
+{name:'ppt/slideMasters/_rels/slideMaster1.xml.rels',data:rels([['rId1','slideLayout','../slideLayouts/slideLayout1.xml'],['rId2','theme','../theme/theme1.xml']])},
+{name:'ppt/slideLayouts/slideLayout1.xml',data:layout},
+{name:'ppt/slideLayouts/_rels/slideLayout1.xml.rels',data:rels([['rId1','slideMaster','../slideMasters/slideMaster1.xml']])},
+{name:'ppt/theme/theme1.xml',data:theme},{name:'ppt/media/image1.png',data:png}
+];
+return zipStore(files)
+}
+exportSelect.addEventListener('change',function(){
+var choice=this.value;this.value='';if(!choice)return;
+if(choice==='pdf'){if(!main.classList.contains('report-active')){mode.value='capability';mode.dispatchEvent(new Event('change'))}setTimeout(function(){window.print()},350);return}
+if(choice==='pptx'){if(!main.classList.contains('report-active')){mode.value='capability';mode.dispatchEvent(new Event('change'))}setTimeout(function(){captureReport().then(function(c){download(makePptx(c),'FryeFBU-capability-report.pptx')}).catch(function(e){alert(e.message)})},350)}
+});
+document.querySelectorAll('#process,#indices,#ppm,#status').forEach(function(el){new MutationObserver(function(){applyLanguage(currentLanguage)}).observe(el,{childList:true,subtree:true,characterData:true})});
+applyLanguage(currentLanguage);
+toggle();setTimeout(function(){update();applyLanguage(currentLanguage)},100);
 })();
 </script>
 
