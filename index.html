@@ -34,9 +34,9 @@ main.report-active>.title-row,main.report-active>.tables,main.report-active>.ppm
 .cap-report-plot .report-chartframe>.mini{display:none!important}
 .cap-report-plot .report-chartframe>.chart-item{left:0!important;top:0!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important}
 .cap-report-table{padding:4px 7px}
-.cap-report-table h3{text-align:center;font-size:13px;font-weight:400;margin:0;padding:0 4px 2px;border-bottom:1px solid #999}
+.cap-report-table h3{text-align:center;font-size:13px;font-weight:400;margin:0;padding:0 4px 2px;border-bottom:1px solid #999;position:static!important;inset:auto!important;width:auto!important;height:auto!important;transform:none!important}
 .cap-report-table table{width:100%;border-collapse:collapse;font-size:12px}
-.cap-report-table td{padding:1px 8px;line-height:1.35}
+.cap-report-table td{padding:1px 8px;line-height:1.35;position:static!important;inset:auto!important;width:auto!important;height:auto!important;transform:none!important}
 .cap-report-table td:last-child{text-align:right;white-space:nowrap}
 .cap-report-table .report-group td{padding-top:5px;font-weight:600}
 .cap-report-table .report-subgroup td{padding-top:4px}
@@ -337,7 +337,7 @@ function applyStyle(el,key){var s=styles[key]||{};if(s.weight)el.style.fontWeigh
 function register(){
 tableNode.querySelectorAll('[data-report-id]').forEach(function(el){var key=el.getAttribute('data-report-id');el.classList.add('report-item');applyPos(el,key);applyStyle(el,key)});
 var graph=frame;graph.setAttribute('data-report-id','chart');graph.classList.add('report-item');host.appendChild(graph);applyPos(graph,'chart');applyStyle(graph,'chart');
-tableNode.querySelectorAll('.cap-report-table h3').forEach(function(el){var key='heading-'+el.parentElement.getAttribute('data-report-id');el.setAttribute('data-report-text-id',key);applyStyle(el,key)});tableNode.querySelectorAll('.cap-report-table td').forEach(function(td){var row=td.parentElement,table=td.closest('table'),key=table.id+'-'+row.cells[0].textContent.trim()+'-'+row.rowIndex+'-'+td.cellIndex;td.setAttribute('data-report-text-id',key);applyStyle(td,key)});
+tableNode.querySelectorAll('.cap-report-table h3').forEach(function(el){var key='heading-'+el.parentElement.getAttribute('data-report-id');el.setAttribute('data-report-text-id',key);applyStyle(el,key)});tableNode.querySelectorAll('.cap-report-table tr').forEach(function(row){var table=row.closest('table'),key='row-'+table.id+'-'+row.rowIndex;row.setAttribute('data-report-text-id',key);applyStyle(row,key)});
 }
 function readTable(id){var o={};Array.from(document.getElementById(id).rows).forEach(function(r){if(r.cells.length>1)o[r.cells[0].textContent.trim()]=r.cells[1].textContent.trim()});return o}
 function rowsHTML(rows,prefix){return rows.map(function(r){var label=window.fryeTranslate?window.fryeTranslate(r[0]):r[0];return '<tr'+(r[2]?' class="'+r[2]+'"':'')+'><td>'+esc(label)+'</td><td>'+esc(r[1])+'</td></tr>'}).join('')}
@@ -367,7 +367,7 @@ reportTitle.addEventListener('input',function(){if(title)title.textContent=this.
 function getKey(el){return el.getAttribute('data-report-text-id')||el.getAttribute('data-report-id')}
 function targets(){return Array.from(tableNode.querySelectorAll('[data-report-id],[data-report-text-id]'))}
 function setSelected(arr){var unique=Array.from(new Set(arr));selected=unique.filter(function(el){return !unique.some(function(other){return other!==el&&other.contains(el)})});targets().forEach(function(el){el.classList.toggle('report-selected',selected.indexOf(el)>=0)});var lab=document.getElementById('reportSelection'),names=selected.map(function(el){return getKey(el)});lab.textContent=names.length?names.join(', '):'Chưa chọn vùng';
-['reportWidth','reportHeight','reportReset','reportLock'].forEach(function(id){document.getElementById(id).disabled=!editing||!selected.length});document.getElementById('reportLock').textContent=selected.length&&selected.every(function(el){return locks[getKey(el)]})?'🔒 Mở khóa vùng':'🔓 Khóa vùng';
+['reportWidth','reportHeight','reportReset','reportLock'].forEach(function(id){document.getElementById(id).disabled=!editing||!selected.length});if(selected.some(function(el){return el.matches('.cap-report-table tr,.cap-report-table h3')})){document.getElementById('reportWidth').disabled=true;document.getElementById('reportHeight').disabled=true}document.getElementById('reportLock').textContent=selected.length&&selected.every(function(el){return locks[getKey(el)]})?'🔒 Mở khóa vùng':'🔓 Khóa vùng';
 if(selected.length===1){var el=selected[0],s=styles[getKey(el)]||{},rect=el.getBoundingClientRect(),box=canvas.getBoundingClientRect();document.getElementById('reportWidth').value=Math.round(el.hasAttribute('data-report-id')?rect.width/box.width*100:rect.width);document.getElementById('reportWidthUnit').textContent=el.hasAttribute('data-report-id')?'%':'px';document.getElementById('reportHeight').value=Math.round(rect.height)}
 syncFormat()
 }
@@ -378,6 +378,7 @@ else{var s=styles[key]||(styles[key]={});s.free=true;s.x=+(r.left-b.left).toFixe
 save()
 }
 function startMove(e,arr,resize){
+if(arr.some(function(el){return el.matches('.cap-report-table tr,.cap-report-table h3')})){document.getElementById('reportSelection').textContent='Hàng đã chọn · dùng thanh định dạng; kéo cả khung bảng để đổi vị trí';return}
 if(arr.some(function(el){return locks[getKey(el)]})){document.getElementById('reportSelection').textContent='Vùng đã khóa · bấm Mở khóa vùng để chỉnh';return}checkpoint();
 var startX=e.clientX,startY=e.clientY,rs=arr.map(function(el){var r=el.getBoundingClientRect(),parent=el.hasAttribute('data-report-id')?canvas:(el.closest('.report-item')||canvas),b=parent.getBoundingClientRect();return{el:el,x:r.left-b.left,y:r.top-b.top,w:r.width,h:r.height,root:el.hasAttribute('data-report-id')}});
 function move(ev){var dx=ev.clientX-startX,dy=ev.clientY-startY;if(resize){var base=rs[0],nw=Math.max(24,base.w+dx),nh=Math.max(18,base.h+dy),sx=nw/base.w,sy=nh/base.h;rs.forEach(function(q){var x=q.x,y=q.y,w=q.w,h=q.h;if(arr.length>1){q.el.style.left=(x*sx)+'px';q.el.style.top=(y*sy)+'px';q.el.style.width=(w*sx)+'px';q.el.style.height=(h*sy)+'px';q.el.style.position='absolute'}else{q.el.style.width=(w+dx)+'px';q.el.style.height=(h+dy)+'px'}})}else{rs.forEach(function(q){q.el.style.position='absolute';q.el.style.left=(q.x+dx)+'px';q.el.style.top=(q.y+dy)+'px'})}}
@@ -385,7 +386,7 @@ function up(){document.removeEventListener('pointermove',move);document.removeEv
 document.addEventListener('pointermove',move);document.addEventListener('pointerup',up,{once:true})
 }
 var grip;
-function drawGrip(){if(grip)grip.remove();if(!editing||selected.length!==1)return;grip=document.createElement('div');grip.className='report-size-grip';grip.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();startMove(e,selected,true)});selected[0].appendChild(grip)}
+function drawGrip(){if(grip)grip.remove();if(!editing||selected.length!==1||selected[0].matches('.cap-report-table tr,.cap-report-table h3'))return;grip=document.createElement('div');grip.className='report-size-grip';grip.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();startMove(e,selected,true)});selected[0].appendChild(grip)}
 tableNode.querySelector('#reportEditToggle').addEventListener('click',function(){editing=!editing;tableNode.classList.toggle('report-editing',editing);this.textContent=editing?'Xong chỉnh sửa':'Bật chỉnh sửa bố cục';if(!editing)setSelected([]);else setSelected([]);drawGrip()});
 tableNode.addEventListener('pointerdown',function(e){
 if(!editing)return;
@@ -427,7 +428,7 @@ document.getElementById('reportBold').addEventListener('click',function(){applyF
 document.getElementById('reportItalic').addEventListener('click',function(){applyFormat('italic',this.getAttribute('aria-pressed')==='true'?'normal':'italic')});
 [['reportAlignLeft','left'],['reportAlignCenter','center'],['reportAlignRight','right']].forEach(function(pair){document.getElementById(pair[0]).addEventListener('click',function(){applyFormat('align',pair[1])})});
 window.addEventListener('scroll',syncFormat,true);window.addEventListener('resize',syncFormat);
-function applyDimension(id,prop,asPercent){var v=Number(document.getElementById(id).value);if(!Number.isFinite(v)||v<=0)return;if(selected.some(function(el){return locks[getKey(el)]})){document.getElementById('reportSelection').textContent='Vùng đã khóa · bấm Mở khóa vùng để chỉnh';return}checkpoint();selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={}),percent=asPercent&&el.hasAttribute('data-report-id');s[prop]=v;if(prop==='width')s.free=!percent;el.style[prop]=v+(percent?'%':'px')});save();drawGrip()}
+function applyDimension(id,prop,asPercent){var v=Number(document.getElementById(id).value);if(!Number.isFinite(v)||v<=0)return;if(selected.some(function(el){return el.matches('.cap-report-table tr,.cap-report-table h3')})){document.getElementById('reportSelection').textContent='Kích thước dòng theo nội dung bảng; hãy chỉnh cỡ chữ trên thanh định dạng';return}if(selected.some(function(el){return locks[getKey(el)]})){document.getElementById('reportSelection').textContent='Vùng đã khóa · bấm Mở khóa vùng để chỉnh';return}checkpoint();selected.forEach(function(el){var k=getKey(el),s=styles[k]||(styles[k]={}),percent=asPercent&&el.hasAttribute('data-report-id');s[prop]=v;if(prop==='width')s.free=!percent;el.style[prop]=v+(percent?'%':'px')});save();drawGrip()}
 document.getElementById('reportWidth').addEventListener('change',function(){applyDimension('reportWidth','width',true)});
 document.getElementById('reportHeight').addEventListener('change',function(){applyDimension('reportHeight','height',false)});
 document.getElementById('reportReset').addEventListener('click',function(){if(selected.some(function(el){return locks[getKey(el)]})){document.getElementById('reportSelection').textContent='Vùng đã khóa · bấm Mở khóa vùng để chỉnh';return}checkpoint();selected.forEach(function(el){var affected=[el].concat(targets().filter(function(x){return x!==el&&el.contains(x)}));affected.forEach(function(q){var k=getKey(q);delete styles[k];q.removeAttribute('style');if(q.hasAttribute('data-report-id'))applyPos(q,k)})});save();setSelected(selected);drawGrip()});document.getElementById('reportResetAll').addEventListener('click',function(){if(!window.confirm('Khôi phục toàn bộ bố cục, màu và cỡ chữ của báo cáo về mặc định?'))return;checkpoint();positions=Object.assign({},defaultLayout);styles={};locks={};targets().forEach(function(el){el.removeAttribute('style')});register();save();document.getElementById('run').click();setSelected([]);drawGrip()});
