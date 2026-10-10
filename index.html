@@ -239,9 +239,10 @@ a.forEach(function(v){var i=Math.floor((v-histLo)/bw);if(i>=0&&i<k)bins[Math.min
 var peak=Math.max.apply(null,bins.concat([1])),scale=a.length*bw;
 function norm(x,m,sd){return sd>0?scale/(sd*Math.sqrt(2*Math.PI))*Math.exp(-.5*Math.pow((x-m)/sd,2)):0}
 peak=Math.max(peak,norm(s.m,s.within),norm(s.m,s.overall))*1.14;
-function X(x){return L+(x-x0)/(x1-x0)*PW}function Y(y){return T+PH-y/peak*PH}
+var yStep=Math.max(1,Math.ceil(peak/5)),yMax=yStep*5;
+function X(x){return L+(x-x0)/(x1-x0)*PW}function Y(y){return T+PH-y/yMax*PH}
 var out='';
-for(var j=0;j<=4;j++){var yy=Y(peak*j/4);out+='<line x1="'+L+'" y1="'+yy+'" x2="'+(L+PW)+'" y2="'+yy+'" stroke="#e9ecec"/><text x="'+(L-7)+'" y="'+(yy+4)+'" text-anchor="end" font-size="9" fill="#758087">'+Math.round(peak*j/4)+'</text>'}
+for(var j=0;j<=5;j++){var tick=j*yStep,yy=Y(tick);out+='<line x1="'+L+'" y1="'+yy+'" x2="'+(L+PW)+'" y2="'+yy+'" stroke="#e9ecec"/><text x="'+(L-7)+'" y="'+(yy+4)+'" text-anchor="end" font-size="9" fill="#758087">'+tick+'</text>'}
 bins.forEach(function(v,i){var bx=X(histLo+i*bw),bx2=X(histLo+(i+1)*bw),x=bx+1,w=Math.max(1,bx2-bx-2);if(v)out+='<rect x="'+x+'" y="'+Y(v)+'" width="'+w+'" height="'+(T+PH-Y(v))+'" fill="#cdd1d2" stroke="#333" stroke-width="1.2"/>'});
 for(var z=0;z<=8;z++){var val=x0+(x1-x0)*z/8,xx=X(val);out+='<line x1="'+xx+'" y1="'+(T+PH)+'" x2="'+xx+'" y2="'+(T+PH+4)+'" stroke="#555"/><text x="'+xx+'" y="'+(H-17)+'" text-anchor="middle" font-size="8" fill="#58636a">'+val.toFixed(2)+'</text>'}
 out+='<line x1="'+L+'" y1="'+(T+PH)+'" x2="'+(L+PW)+'" y2="'+(T+PH)+'" stroke="#555"/>';
