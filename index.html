@@ -75,6 +75,7 @@ main.report-active>.title-row,main.report-active>.tables,main.report-active>.ppm
 </style>
 <style id="minitab-report-layout">
 #capReport{padding:8px 14px 12px}
+#capReport .cap-report-head h2,#capReport .cap-report-head p{text-align:center}
 .cap-report-grid{height:670px;min-height:670px}
 .cap-report-head h2{font-size:22px}
 .cap-report-head p{font-size:13px;color:#555}
@@ -447,11 +448,11 @@ tableNode.innerHTML='<div class="report-format-pop" role="toolbar" aria-label="Ä
 var toolbar=document.querySelector('.graph-tools'),frame=document.querySelector('.chartframe'),homeParent=frame.parentNode,homeNext=frame.nextSibling;
 if(toolbar&&toolbar.parentNode)toolbar.parentNode.insertBefore(tableNode,frame);
 var host=tableNode.querySelector('.cap-report-plothost'),title=document.getElementById('title'),reportTitle=tableNode.querySelector('#capReportTitle'),canvas=tableNode.querySelector('.cap-report-grid');
-var defaultLayout={title:{x:0,y:0,w:100,h:28},subtitle:{x:0,y:30,w:100,h:20},process:{x:0,y:92,w:20,h:155},chart:{x:21,y:65,w:54,h:355},customer:{x:77,y:72,w:22,h:83},stats:{x:77,y:168,w:22,h:264},reportPpm:{x:0,y:440,w:75,h:92},legendActual:{x:0,y:545,w:75,h:28},legendPotential:{x:0,y:578,w:75,h:48}};
+var defaultLayout={title:{x:0,y:0,w:100,h:28},subtitle:{x:0,y:30,w:100,h:20},process:{x:0,y:92,w:20,h:155},chart:{x:21,y:65,w:54,h:355},customer:{x:77,y:72,w:22,h:83},stats:{x:77,y:168,w:22,h:264},reportPpm:{x:0,y:440,w:60,h:92},legendActual:{x:0,y:545,w:60,h:28},legendPotential:{x:0,y:578,w:60,h:48}};
 var saved;try{saved=JSON.parse(localStorage.getItem('fryefbu-report-layout-v3')||localStorage.getItem('fryefbu-report-layout-v2')||'{}')}catch(e){saved={}}
-var positions=Object.assign({},defaultLayout,saved.version===4?(saved.positions||{}):{}),styles=saved.version===4?(saved.styles||{}):{},locks=saved.version===4?(saved.locks||{}):{},selected=[],editing=false,undoStack=[];
+var positions=Object.assign({},defaultLayout,saved.version===5?(saved.positions||{}):{}),styles=saved.version===5?(saved.styles||{}):{},locks=saved.version===5?(saved.locks||{}):{},selected=[],editing=false,undoStack=[];
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function save(){try{localStorage.setItem('fryefbu-report-layout-v3',JSON.stringify({version:4,positions:positions,styles:styles,locks:locks}));localStorage.setItem('fryefbu-report-layout-v2',JSON.stringify({version:4,positions:positions,styles:styles,locks:locks}))}catch(e){}}
+function save(){try{localStorage.setItem('fryefbu-report-layout-v3',JSON.stringify({version:5,positions:positions,styles:styles,locks:locks}));localStorage.setItem('fryefbu-report-layout-v2',JSON.stringify({version:5,positions:positions,styles:styles,locks:locks}))}catch(e){}}
 function checkpoint(){undoStack.push(JSON.stringify({positions:positions,styles:styles,locks:locks}));if(undoStack.length>30)undoStack.shift();var b=document.getElementById('reportUndo');if(b)b.disabled=false}
 function undo(){if(!undoStack.length)return;var x=JSON.parse(undoStack.pop());positions=x.positions||{};styles=x.styles||{};locks=x.locks||{};save();targets().forEach(function(el){el.removeAttribute('style')});register();setSelected([]);drawGrip();document.getElementById('reportUndo').disabled=!undoStack.length;}
 function applyPos(el,key){var p=positions[key]||defaultLayout[key];if(!p)return;el.style.left=p.x+'%';el.style.top=p.y+'px';el.style.width=p.w+'%';el.style.height=p.h+'px'}
